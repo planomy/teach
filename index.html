@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teach · BrisbaneSDE · 2026</title>
+<style>
+  :root{
+    --bg0:#1e1830; --bg1:#262038; --bg2:#302a44;
+    --ink:#fcfaf8; --ink-dim:#ddd6ec; --ink-faint:#a89cb8;
+    --line:#6a6284; --gold:#e8b838; --gold2:#ffe8a0;
+    --radius:18px;
+    --font:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--font);color:var(--ink);background:var(--bg0);min-height:100vh;}
+  .wrap{max-width:960px;margin:0 auto;padding:28px 20px 48px;}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(240,192,64,.16);color:#ffe8b0;border:1px solid rgba(240,192,64,.35);
+    font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:11px;padding:6px 12px;border-radius:999px;margin-bottom:12px;}
+  h1{font-size:clamp(28px,4vw,42px);line-height:1.05;margin-bottom:8px;}
+  .lead{color:var(--ink-dim);font-size:17px;line-height:1.45;margin-bottom:28px;max-width:52ch;}
+  .crumb{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:20px;font-size:14px;font-weight:700;color:var(--ink-faint);}
+  .crumb span{color:var(--gold2);}
+  .crumb .sep{opacity:.45;}
+  .term-block{background:linear-gradient(155deg,var(--bg1),var(--bg2));border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);padding:22px 24px 24px;
+    box-shadow:0 20px 50px rgba(12,8,24,.35);}
+  .term-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.08);}
+  .term-head h2{font-size:22px;color:var(--gold2);}
+  .term-head p{font-size:13px;color:var(--ink-faint);}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;}
+  .unit{
+    display:flex;flex-direction:column;gap:6px;padding:16px 18px;border-radius:14px;border:1px solid rgba(255,255,255,.1);
+    background:rgba(255,255,255,.05);text-decoration:none;color:inherit;transition:border-color .15s,background .15s,transform .15s;
+    min-height:108px;position:relative;
+  }
+  a.unit:hover{border-color:var(--accent,var(--gold));background:rgba(255,255,255,.09);transform:translateY(-2px);}
+  a.unit:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+  .unit.off{opacity:.5;cursor:default;pointer-events:none;}
+  .unit .subj{font-size:18px;font-weight:800;line-height:1.15;}
+  .unit .meta{font-size:12px;color:var(--ink-dim);line-height:1.35;flex:1;}
+  .badge{align-self:flex-start;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px;}
+  .badge.live{background:rgba(126,217,154,.2);color:#7ed99a;border:1px solid rgba(126,217,154,.35);}
+  .badge.soon{background:rgba(255,255,255,.06);color:var(--ink-faint);border:1px solid rgba(255,255,255,.1);}
+  .unit.maths{--accent:#e8b838}
+  .unit.hass{--accent:#f09888}
+  .unit.science{--accent:#5dd9b0}
+  .unit.english{--accent:#7eb8ff}
+  .unit.art{--accent:#f0a0d0}
+  .unit.drama{--accent:#c8a0ff}
+  .unit.spelling{--accent:#7ed99a}
+  .unit.mathsfacts{--accent:#ffe066}
+  .unit.reading{--accent:#ffb088}
+  footer{margin-top:28px;text-align:center;font-size:12px;color:var(--ink-faint);}
+  footer a{color:var(--gold2);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="eyebrow">Teacher hub</span>
+  <h1>Teach</h1>
+  <p class="lead">Presentation units for BrisbaneSDE — pick a year, term and subject. Units open in a new tab.</p>
+
+  <div class="crumb">
+    <span>2026</span><span class="sep">›</span><span>Term 3</span>
+  </div>
+
+  <section class="term-block" aria-label="2026 Term 3">
+    <div class="term-head">
+      <h2>Term 3 · 2026</h2>
+      <p>Year 5 · teacher presentation decks</p>
+    </div>
+    <div class="grid" id="units"></div>
+  </section>
+
+  <footer>
+    <p><a href="https://github.com/planomy/teach">planomy/teach</a> · Pages on <code>main</code> · no Actions</p>
+  </footer>
+</div>
+<script>
+const UNITS = [
+  { id:'maths',       label:'Maths',        meta:'Maths Heads · fractions, decimals, ×÷',     href:'https://planomy.github.io/mathsheads/',       ready:true },
+  { id:'hass',        label:'HASS',         meta:'Consumers · needs, wants & the school fete', href:'https://planomy.github.io/hassconsumers/',    ready:true },
+  { id:'science',     label:'Science',      meta:'States of Matter · investigation unit',      href:'https://planomy.github.io/sciencematter/',    ready:true },
+  { id:'english',     label:'English',      meta:'Renewable Energy · information report',      href:'https://planomy.github.io/renewableenergy/',  ready:true },
+  { id:'art',         label:'Art',          meta:'Term 3 unit — link coming soon',             ready:false },
+  { id:'drama',       label:'Drama',        meta:'Term 3 unit — link coming soon',             ready:false },
+  { id:'spelling',    label:'Spelling',     meta:'Term 3 unit — link coming soon',             ready:false },
+  { id:'mathsfacts',  label:'Maths Facts',  meta:'Term 3 unit — link coming soon',             ready:false },
+  { id:'reading',     label:'Reading',      meta:'Term 3 unit — link coming soon',             ready:false }
+];
+
+const grid = document.getElementById('units');
+grid.innerHTML = UNITS.map(u => {
+  const cls = `unit ${u.id}${u.ready ? '' : ' off'}`;
+  const tag = u.ready
+    ? `<span class="badge live">Open unit</span>`
+    : `<span class="badge soon">Coming soon</span>`;
+  if (u.ready) {
+    return `<a class="${cls}" href="${u.href}" target="_blank" rel="noopener">
+      <span class="subj">${u.label}</span>
+      <span class="meta">${u.meta}</span>
+      ${tag}
+    </a>`;
+  }
+  return `<div class="${cls}" aria-disabled="true">
+    <span class="subj">${u.label}</span>
+    <span class="meta">${u.meta}</span>
+    ${tag}
+  </div>`;
+}).join('');
+</script>
+</body>
+</html>
