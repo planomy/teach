@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Events · Teach · BrisbaneSDE</title>
+<script>try{var t=localStorage.getItem('teach-theme');if(t==='light')document.documentElement.dataset.theme='light'}catch(e){}</script>
+<style>
+  :root{--bg0:#1e1830;--bg1:#262038;--bg2:#302a44;--ink:#fcfaf8;--ink-dim:#ddd6ec;--ink-faint:#a89cb8;--line:#6a6284;--gold2:#ffe8a0;--font:"Segoe UI",system-ui,sans-serif}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--font);color:var(--ink);background:var(--bg0);min-height:100vh}
+  a{color:var(--gold2)}
+  .top{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .top h1{font-size:20px;margin-right:auto}
+  .wrap{max-width:720px;margin:0 auto;padding:20px}
+  .card{background:var(--bg1);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:16px;margin-bottom:16px}
+  label{font-size:11px;font-weight:700;color:var(--ink-faint);display:block;margin-bottom:4px}
+  input,textarea{background:var(--bg2);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px 10px;font:inherit;font-size:14px;width:100%}
+  textarea{min-height:72px;resize:vertical;margin-top:8px}
+  .row{display:grid;grid-template-columns:140px 1fr;gap:10px;align-items:end}
+  .btn{background:var(--bg2);border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer}
+  .btn.primary{background:rgba(232,184,56,.18);border-color:rgba(232,184,56,.45);color:var(--gold2)}
+  .item{display:flex;gap:10px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+  .item:last-child{border-bottom:none}
+  .date{min-width:52px;font-size:12px;font-weight:800;color:var(--gold2)}
+  .item-body{flex:1}
+  .item-body strong{display:block;margin-bottom:4px}
+  .item-body p{font-size:13px;color:var(--ink-dim);line-height:1.4;white-space:pre-wrap}
+  .del{background:none;border:none;color:var(--ink-faint);cursor:pointer;font-size:18px;padding:4px}
+  .del:hover{color:#f09888}
+  .empty{color:var(--ink-faint);font-size:14px;padding:12px 0}
+</style>
+<link rel="stylesheet" href="hub-theme.css">
+</head>
+<body>
+<div class="top">
+  <h1><a href="index.html">← Teach</a> · Events</h1>
+  <button class="theme-toggle" type="button"></button>
+</div>
+<div class="wrap">
+  <div class="card">
+    <div class="row">
+      <div><label for="evDate">Date</label><input type="date" id="evDate"></div>
+      <div><label for="evTitle">Event</label><input id="evTitle" placeholder="e.g. School fete, excursion…"></div>
+    </div>
+    <label for="evNote" style="margin-top:10px">Notes (optional)</label>
+    <textarea id="evNote" placeholder="Details, times, what to bring…"></textarea>
+    <button class="btn primary" id="addBtn" type="button" style="margin-top:10px">Add event</button>
+  </div>
+  <div class="card" id="list"></div>
+</div>
+<script src="hub-data.js"></script>
+<script>
+document.getElementById('evDate').value = HubStore.today();
+
+function render(){
+  const events = HubStore.getEvents();
+  const el = document.getElementById('list');
+  if(!events.length){
+    el.innerHTML = '<p class="empty">No events yet — add one above.</p>';
+    return;
+  }
+  el.innerHTML = events.map(e => `
+    <div class="item" data-id="${e.id}">
+      <div class="date">${HubStore.formatShortDate(e.date)}</div>
+      <div class="item-body">
+        <strong>${HubStore.esc(e.title)}</strong>
+        ${e.note ? `<p>${HubStore.esc(e.note)}</p>` : ''}
+      </div>
+      <button class="del" type="button" data-del title="Remove">×</button>
+    </div>
+  `).join('');
+}
+
+document.getElementById('addBtn').onclick = () => {
+  HubStore.addEvent({
+    date: document.getElementById('evDate').value,
+    title: document.getElementById('evTitle').value,
+    note: document.getElementById('evNote').value
+  });
+  document.getElementById('evTitle').value = '';
+  document.getElementById('evNote').value = '';
+  document.getElementById('evTitle').focus();
+  render();
+};
+
+document.getElementById('evTitle').addEventListener('keydown', e => {
+  if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('addBtn').click(); }
+});
+
+document.getElementById('list').addEventListener('click', e => {
+  if(e.target.dataset.del != null){
+    HubStore.removeEvent(e.target.closest('[data-id]').dataset.id);
+    render();
+  }
+});
+
+render();
+</script>
+<script src="hub-theme.js"></script>
+</body>
+</html>

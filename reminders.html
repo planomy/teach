@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reminders · Teach · BrisbaneSDE</title>
+<script>try{var t=localStorage.getItem('teach-theme');if(t==='light')document.documentElement.dataset.theme='light'}catch(e){}</script>
+<style>
+  :root{--bg0:#1e1830;--bg1:#262038;--bg2:#302a44;--ink:#fcfaf8;--ink-dim:#ddd6ec;--ink-faint:#a89cb8;--line:#6a6284;--gold2:#ffe8a0;--font:"Segoe UI",system-ui,sans-serif}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--font);color:var(--ink);background:var(--bg0);min-height:100vh}
+  a{color:var(--gold2)}
+  .top{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .top h1{font-size:20px;margin-right:auto}
+  .wrap{max-width:720px;margin:0 auto;padding:20px}
+  .card{background:var(--bg1);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:16px;margin-bottom:16px}
+  .add-row{display:flex;gap:8px}
+  input{background:var(--bg2);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:10px 12px;font:inherit;font-size:14px;flex:1}
+  .btn{background:var(--bg2);border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+  .btn.primary{background:rgba(240,152,136,.18);border-color:rgba(240,152,136,.45);color:#ffc8b8}
+  .item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+  .item:last-child{border-bottom:none}
+  .item input[type=checkbox]{width:18px;height:18px;margin-top:2px;accent-color:#f09888;cursor:pointer}
+  .item label{flex:1;font-size:14px;line-height:1.4;cursor:pointer}
+  .item.done label{text-decoration:line-through;color:var(--ink-faint)}
+  .del{background:none;border:none;color:var(--ink-faint);cursor:pointer;font-size:18px;padding:4px}
+  .del:hover{color:#f09888}
+  .empty{color:var(--ink-faint);font-size:14px;padding:12px 0}
+  .hint{font-size:12px;color:var(--ink-faint);margin-top:8px}
+</style>
+<link rel="stylesheet" href="hub-theme.css">
+</head>
+<body>
+<div class="top">
+  <h1><a href="index.html">← Teach</a> · Reminders</h1>
+  <button class="theme-toggle" type="button"></button>
+</div>
+<div class="wrap">
+  <div class="card">
+    <div class="add-row">
+      <input id="rmText" placeholder="e.g. Print worksheets, email parent, submit marks…">
+      <button class="btn primary" id="addBtn" type="button">Add</button>
+    </div>
+    <p class="hint">Press Enter to add quickly. Tick off when done.</p>
+  </div>
+  <div class="card" id="list"></div>
+</div>
+<script src="hub-data.js"></script>
+<script>
+function render(){
+  const items = HubStore.getReminders();
+  const el = document.getElementById('list');
+  if(!items.length){
+    el.innerHTML = '<p class="empty">No reminders — type one above and press Enter.</p>';
+    return;
+  }
+  el.innerHTML = items.map(r => `
+    <div class="item${r.done ? ' done' : ''}" data-id="${r.id}">
+      <input type="checkbox" id="cb-${r.id}" ${r.done ? 'checked' : ''} data-toggle>
+      <label for="cb-${r.id}">${HubStore.esc(r.text)}</label>
+      <button class="del" type="button" data-del title="Remove">×</button>
+    </div>
+  `).join('');
+}
+
+function addCurrent(){
+  HubStore.addReminder(document.getElementById('rmText').value);
+  document.getElementById('rmText').value = '';
+  document.getElementById('rmText').focus();
+  render();
+}
+
+document.getElementById('addBtn').onclick = addCurrent;
+document.getElementById('rmText').addEventListener('keydown', e => {
+  if(e.key === 'Enter'){ e.preventDefault(); addCurrent(); }
+});
+
+document.getElementById('list').addEventListener('click', e => {
+  const row = e.target.closest('[data-id]');
+  if(!row) return;
+  if(e.target.dataset.toggle != null){
+    HubStore.toggleReminder(row.dataset.id);
+    render();
+  }
+  if(e.target.dataset.del != null){
+    HubStore.removeReminder(row.dataset.id);
+    render();
+  }
+});
+
+render();
+</script>
+<script src="hub-theme.js"></script>
+</body>
+</html>

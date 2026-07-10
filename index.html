@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Teach · BrisbaneSDE · 2026</title>
+<script>try{var t=localStorage.getItem('teach-theme');if(t==='light')document.documentElement.dataset.theme='light'}catch(e){}</script>
 <style>
   :root{
     --bg0:#1e1830; --bg1:#262038; --bg2:#302a44;
@@ -14,14 +15,8 @@
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:var(--font);color:var(--ink);background:var(--bg0);min-height:100vh;}
-  .wrap{max-width:960px;margin:0 auto;padding:28px 20px 48px;}
-  .eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(240,192,64,.16);color:#ffe8b0;border:1px solid rgba(240,192,64,.35);
-    font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:11px;padding:6px 12px;border-radius:999px;margin-bottom:12px;}
-  h1{font-size:clamp(28px,4vw,42px);line-height:1.05;margin-bottom:8px;}
-  .lead{color:var(--ink-dim);font-size:17px;line-height:1.45;margin-bottom:28px;max-width:52ch;}
-  .crumb{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:20px;font-size:14px;font-weight:700;color:var(--ink-faint);}
-  .crumb span{color:var(--gold2);}
-  .crumb .sep{opacity:.45;}
+  .wrap{max-width:1100px;margin:0 auto;padding:20px 20px 48px;}
+  h1{font-size:clamp(28px,4vw,42px);line-height:1.05;margin-bottom:20px;}
   .term-block{background:linear-gradient(155deg,var(--bg1),var(--bg2));border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);padding:22px 24px 24px;
     box-shadow:0 20px 50px rgba(12,8,24,.35);}
   .term-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.08);}
@@ -50,18 +45,137 @@
   .unit.spelling{--accent:#7ed99a}
   .unit.mathsfacts{--accent:#ffe066}
   .unit.reading{--accent:#ffb088}
+  .hub-tools{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;align-items:stretch;}
+  .tool-card{
+    display:flex;flex-direction:column;gap:6px;padding:16px 16px 14px;border-radius:14px;
+    border:1px solid rgba(126,217,154,.25);background:rgba(126,217,154,.08);
+    color:inherit;min-height:200px;
+  }
+  a.tool-card{text-decoration:none;transition:border-color .15s,background .15s,transform .15s;}
+  a.tool-card:hover{border-color:#7ed99a;background:rgba(126,217,154,.14);transform:translateY(-2px);}
+  .tool-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .tool-card strong{font-size:16px;color:#b8ffd0;line-height:1.2}
+  .tool-expand{
+    flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;
+    width:26px;height:26px;border-radius:7px;
+    color:inherit;opacity:.55;text-decoration:none;
+  }
+  .tool-expand svg{width:14px;height:14px;display:block}
+  .tool-expand:hover{opacity:1;background:rgba(255,255,255,.08)}
+  .tool-card .desc{font-size:12px;color:var(--ink-dim);line-height:1.35;margin-bottom:2px}
+  .tool-card.events{border-color:rgba(232,184,56,.3);background:rgba(232,184,56,.08)}
+  .tool-card.events strong{color:var(--gold2)}
+  .tool-card.meetings{border-color:rgba(126,184,255,.3);background:rgba(126,184,255,.08)}
+  .tool-card.meetings strong{color:#b8d8ff}
+  .tool-card.reminders{border-color:rgba(240,152,136,.3);background:rgba(240,152,136,.08)}
+  .tool-card.reminders strong{color:#ffc8b8}
+  .tool-live{flex:1;display:flex;flex-direction:column;gap:6px;min-height:0}
+  .tool-list{font-size:12px;color:var(--ink-dim);line-height:1.35;overflow:hidden}
+  .tool-list .row-item{display:flex;gap:6px;align-items:flex-start;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+  .tool-list .row-item:last-child{border-bottom:none}
+  .tool-list .when{min-width:38px;font-size:11px;font-weight:800;color:inherit;opacity:.85;flex-shrink:0}
+  .tool-list .txt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tool-list .txt.done{text-decoration:line-through;opacity:.55}
+  .tool-empty{font-size:11px;color:var(--ink-faint);font-style:italic;padding:4px 0}
+  .tool-quick{display:flex;gap:5px;margin-top:auto;align-items:center}
+  .tool-quick input[type=text],.tool-quick input:not([type]){
+    background:var(--bg2);border:1px solid var(--line);color:var(--ink);
+    border-radius:8px;padding:7px 8px;font:inherit;font-size:12px;flex:1;min-width:0;
+  }
+  .tool-quick button{
+    background:var(--bg2);border:1px solid var(--line);color:var(--ink);
+    border-radius:8px;padding:7px 9px;font:inherit;font-size:11px;font-weight:800;cursor:pointer;
+  }
+  .tool-quick button:hover{border-color:var(--gold)}
+  .date-pick{
+    position:relative;flex:0 0 30px;width:30px;height:30px;cursor:pointer;
+  }
+  .date-pick input{
+    position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;
+  }
+  .date-pick .cal-face{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:var(--bg2);
+    pointer-events:none;line-height:1;
+  }
+  .date-pick .cal-face svg{width:12px;height:12px;opacity:.75;margin-bottom:1px}
+  .date-pick .cal-day{font-size:9px;font-weight:800;opacity:.9}
+  .tool-check{width:14px;height:14px;margin-top:1px;accent-color:#f09888;cursor:pointer;flex-shrink:0}
+  @media(max-width:900px){.hub-tools{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:520px){.hub-tools{grid-template-columns:1fr;}}
   footer{margin-top:28px;text-align:center;font-size:12px;color:var(--ink-faint);}
   footer a{color:var(--gold2);}
 </style>
+<link rel="stylesheet" href="hub-theme.css">
 </head>
 <body>
 <div class="wrap">
-  <span class="eyebrow">Teacher hub</span>
-  <h1>Teach</h1>
-  <p class="lead">Presentation units for BrisbaneSDE — pick a year, term and subject. Units open in a new tab.</p>
+  <div class="page-top">
+    <h1>Teach</h1>
+    <button class="theme-toggle" type="button"></button>
+  </div>
 
-  <div class="crumb">
-    <span>2026</span><span class="sep">›</span><span>Term 3</span>
+  <div class="hub-tools">
+    <div class="tool-card">
+      <div class="tool-head">
+        <strong>Student notes</strong>
+        <a class="tool-expand" href="notes.html" title="Open student notes"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2h4v4M6 14H2v-4M14 2 9 7M2 14l5-5"/></svg></a>
+      </div>
+      <span class="desc">Track effort, participation, tasks and results while you teach.</span>
+    </div>
+
+    <div class="tool-card events">
+      <div class="tool-head">
+        <strong>Events</strong>
+        <a class="tool-expand" href="events.html" title="Open all events"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2h4v4M6 14H2v-4M14 2 9 7M2 14l5-5"/></svg></a>
+      </div>
+      <span class="desc">Key dates for the term.</span>
+      <div class="tool-live">
+        <div class="tool-list" id="eventsList"></div>
+        <div class="tool-quick">
+          <label class="date-pick" title="Event date">
+            <span class="cal-face"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M3 2a1 1 0 0 0-1 1v1h12V3a1 1 0 0 0-1-1H3zm12 3H2v8a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V5zM5 1a1 1 0 0 1 2 0v1H5V1z"/></svg><span class="cal-day" id="dashEvDay">·</span></span>
+            <input type="date" id="dashEvDate" aria-label="Event date">
+          </label>
+          <input id="dashEvTitle" placeholder="Add event…" aria-label="Event title">
+          <button type="button" id="dashEvAdd">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tool-card meetings">
+      <div class="tool-head">
+        <strong>Meetings</strong>
+        <a class="tool-expand" href="meetings.html" title="Open all meetings"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2h4v4M6 14H2v-4M14 2 9 7M2 14l5-5"/></svg></a>
+      </div>
+      <span class="desc">Staff, PLT and parent notes.</span>
+      <div class="tool-live">
+        <div class="tool-list" id="meetingsList"></div>
+        <div class="tool-quick">
+          <label class="date-pick" title="Meeting date">
+            <span class="cal-face"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M3 2a1 1 0 0 0-1 1v1h12V3a1 1 0 0 0-1-1H3zm12 3H2v8a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V5zM5 1a1 1 0 0 1 2 0v1H5V1z"/></svg><span class="cal-day" id="dashMtDay">·</span></span>
+            <input type="date" id="dashMtDate" aria-label="Meeting date">
+          </label>
+          <input id="dashMtTitle" placeholder="Add meeting…" aria-label="Meeting title">
+          <button type="button" id="dashMtAdd">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tool-card reminders">
+      <div class="tool-head">
+        <strong>Reminders</strong>
+        <a class="tool-expand" href="reminders.html" title="Open all reminders"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2h4v4M6 14H2v-4M14 2 9 7M2 14l5-5"/></svg></a>
+      </div>
+      <span class="desc">Quick to-dos for the week.</span>
+      <div class="tool-live">
+        <div class="tool-list" id="remindersList"></div>
+        <div class="tool-quick">
+          <input id="dashRmText" placeholder="Add reminder…" aria-label="Reminder">
+          <button type="button" id="dashRmAdd">+</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <section class="term-block" aria-label="2026 Term 3">
@@ -76,6 +190,7 @@
     <p><a href="https://github.com/planomy/teach">planomy/teach</a> · Pages on <code>main</code> · no Actions</p>
   </footer>
 </div>
+<script src="hub-data.js"></script>
 <script>
 const UNITS = [
   { id:'maths',       label:'Maths',        meta:'Maths Heads · fractions, decimals, ×÷',     href:'https://planomy.github.io/mathsheads/',       ready:true },
@@ -108,6 +223,87 @@ grid.innerHTML = UNITS.map(u => {
     ${tag}
   </div>`;
 }).join('');
+
+function syncCalDay(inputId, dayId){
+  const v = document.getElementById(inputId).value;
+  document.getElementById(dayId).textContent = v ? +v.split('-')[2] : '·';
+}
+
+document.getElementById('dashEvDate').value = HubStore.today();
+document.getElementById('dashMtDate').value = HubStore.today();
+syncCalDay('dashEvDate', 'dashEvDay');
+syncCalDay('dashMtDate', 'dashMtDay');
+document.getElementById('dashEvDate').addEventListener('change', () => syncCalDay('dashEvDate', 'dashEvDay'));
+document.getElementById('dashMtDate').addEventListener('change', () => syncCalDay('dashMtDate', 'dashMtDay'));
+
+function renderDashEvents(){
+  const upcoming = HubStore.getEvents().filter(e => e.date >= HubStore.today()).slice(0, 3);
+  const el = document.getElementById('eventsList');
+  if(!upcoming.length){ el.innerHTML = '<div class="tool-empty">No upcoming events</div>'; return; }
+  el.innerHTML = upcoming.map(e => `
+    <div class="row-item"><span class="when">${HubStore.formatShortDate(e.date)}</span><span class="txt">${HubStore.esc(e.title)}</span></div>
+  `).join('');
+}
+
+function renderDashMeetings(){
+  const recent = HubStore.getMeetings().slice().reverse().slice(0, 3);
+  const el = document.getElementById('meetingsList');
+  if(!recent.length){ el.innerHTML = '<div class="tool-empty">No meetings yet</div>'; return; }
+  el.innerHTML = recent.map(m => `
+    <div class="row-item"><span class="when">${HubStore.formatShortDate(m.date)}</span><span class="txt">${HubStore.esc(m.title)}</span></div>
+  `).join('');
+}
+
+function renderDashReminders(){
+  const open = HubStore.getOpenReminders().slice(0, 4);
+  const el = document.getElementById('remindersList');
+  if(!open.length){ el.innerHTML = '<div class="tool-empty">All clear — or add one below</div>'; return; }
+  el.innerHTML = open.map(r => `
+    <div class="row-item" data-id="${r.id}">
+      <input class="tool-check" type="checkbox" data-toggle aria-label="Mark done">
+      <span class="txt">${HubStore.esc(r.text)}</span>
+    </div>
+  `).join('');
+}
+
+function refreshDash(){ renderDashEvents(); renderDashMeetings(); renderDashReminders(); }
+
+document.getElementById('dashEvAdd').onclick = () => {
+  HubStore.addEvent({ date: document.getElementById('dashEvDate').value, title: document.getElementById('dashEvTitle').value });
+  document.getElementById('dashEvTitle').value = '';
+  refreshDash();
+};
+document.getElementById('dashEvTitle').addEventListener('keydown', e => {
+  if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('dashEvAdd').click(); }
+});
+
+document.getElementById('dashMtAdd').onclick = () => {
+  HubStore.addMeeting({ date: document.getElementById('dashMtDate').value, title: document.getElementById('dashMtTitle').value });
+  document.getElementById('dashMtTitle').value = '';
+  refreshDash();
+};
+document.getElementById('dashMtTitle').addEventListener('keydown', e => {
+  if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('dashMtAdd').click(); }
+});
+
+document.getElementById('dashRmAdd').onclick = () => {
+  HubStore.addReminder(document.getElementById('dashRmText').value);
+  document.getElementById('dashRmText').value = '';
+  refreshDash();
+};
+document.getElementById('dashRmText').addEventListener('keydown', e => {
+  if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('dashRmAdd').click(); }
+});
+
+document.getElementById('remindersList').addEventListener('click', e => {
+  if(e.target.dataset.toggle != null){
+    HubStore.toggleReminder(e.target.closest('[data-id]').dataset.id);
+    refreshDash();
+  }
+});
+
+refreshDash();
 </script>
+<script src="hub-theme.js"></script>
 </body>
 </html>

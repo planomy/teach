@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student notes · Teach · BrisbaneSDE</title>
+<script>try{var t=localStorage.getItem('teach-theme');if(t==='light')document.documentElement.dataset.theme='light'}catch(e){}</script>
+<style>
+  :root{
+    --bg0:#1e1830; --bg1:#262038; --bg2:#302a44;
+    --ink:#fcfaf8; --ink-dim:#ddd6ec; --ink-faint:#a89cb8;
+    --line:#6a6284; --gold:#e8b838; --gold2:#ffe8a0;
+    --good:#7ed99a; --warn:#ffe066; --bad:#f09888;
+    --radius:14px;
+    --font:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--font);color:var(--ink);background:var(--bg0);min-height:100vh;}
+  a{color:var(--gold2)}
+
+  .top{
+    position:sticky;top:0;z-index:20;
+    background:rgba(30,24,48,.96);backdrop-filter:blur(10px);
+    border-bottom:1px solid rgba(255,255,255,.08);
+    padding:12px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+  }
+  .top h1{font-size:18px;font-weight:800;margin-right:auto}
+  .top h1 a{text-decoration:none;color:inherit}
+  .pill{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+    padding:4px 10px;border-radius:999px;background:rgba(126,217,154,.15);color:var(--good);border:1px solid rgba(126,217,154,.3)}
+  .pill.saving{color:var(--warn);border-color:rgba(255,224,102,.35);background:rgba(255,224,102,.12)}
+  label{font-size:11px;font-weight:700;color:var(--ink-faint);display:block;margin-bottom:3px}
+  input,select,textarea{
+    background:var(--bg2);border:1px solid var(--line);color:var(--ink);
+    border-radius:10px;padding:8px 10px;font:inherit;font-size:14px;
+  }
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--gold);border-color:transparent}
+  .field{display:flex;flex-direction:column;min-width:120px}
+  .field.wide{flex:1;min-width:160px}
+  .btn{
+    background:var(--bg2);border:1px solid var(--line);color:var(--ink);
+    border-radius:999px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;
+  }
+  .btn:hover{border-color:var(--gold)}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn.primary{background:rgba(232,184,56,.18);border-color:rgba(232,184,56,.45);color:var(--gold2)}
+  .btn.good{background:rgba(126,217,154,.15);border-color:rgba(126,217,154,.35);color:var(--good)}
+
+  .wrap{max-width:1200px;margin:0 auto;padding:16px}
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;align-items:center}
+  .hint{font-size:12px;color:var(--ink-faint)}
+
+  .roster-panel{
+    background:var(--bg1);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);
+    padding:14px 16px;margin-bottom:14px;display:none;
+  }
+  .roster-panel.open{display:block}
+  .roster-panel textarea{width:100%;min-height:90px;margin:8px 0;resize:vertical}
+
+  table{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0 6px}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-faint);text-align:left;padding:0 8px 4px}
+  td{background:var(--bg1);border:1px solid rgba(255,255,255,.07);padding:6px 8px;vertical-align:middle;overflow:hidden}
+  tr td:first-child{border-radius:10px 0 0 10px}
+  tr td:last-child{border-radius:0 10px 10px 0}
+  tr.focus td{background:rgba(255,255,255,.08);border-color:rgba(232,184,56,.35)}
+  .num-cell{width:34px;text-align:center;color:var(--ink-faint);font-size:12px;font-weight:800;padding:6px 4px!important}
+  .name-cell{width:152px;max-width:152px}
+  .name-cell input{width:100%;min-width:0;background:transparent;border:none;color:var(--ink);font-weight:700;font-size:13px;padding:4px}
+  .name-cell input:focus{outline:none;background:rgba(255,255,255,.05);border-radius:6px}
+
+  .rate{
+    min-width:80px;text-align:center;font-size:12px;font-weight:800;padding:7px 5px;border-radius:8px;
+    cursor:pointer;border:1px solid transparent;user-select:none;white-space:nowrap;
+    font-family:inherit;background:none;color:inherit;
+  }
+  .rate:focus{outline:2px solid var(--gold);outline-offset:1px}
+  .rate:hover{border-color:var(--line)}
+  .rate.effort[data-v="0"]{color:var(--ink-faint)}
+  .rate.effort[data-v="1"]{background:rgba(240,152,136,.2);color:#ffb0a0}
+  .rate.effort[data-v="2"]{background:rgba(255,224,102,.15);color:var(--warn)}
+  .rate.effort[data-v="3"]{background:rgba(255,255,255,.06);color:var(--ink-dim)}
+  .rate.effort[data-v="4"]{background:rgba(126,217,154,.15);color:var(--good)}
+  .rate.effort[data-v="5"]{background:rgba(126,217,154,.28);color:#b8ffd0}
+  .rate.part{min-width:96px;font-size:11px}
+  .rate.part[data-v="0"]{color:var(--ink-faint)}
+  .rate.part[data-v="1"]{background:rgba(240,152,136,.28);color:#ffb0a0}
+  .rate.part[data-v="2"]{background:rgba(240,152,136,.18);color:var(--bad)}
+  .rate.part[data-v="3"]{background:rgba(255,224,102,.15);color:var(--warn)}
+  .rate.part[data-v="4"]{background:rgba(255,255,255,.06);color:var(--ink-dim)}
+  .rate.part[data-v="5"]{background:rgba(126,217,154,.18);color:var(--good)}
+  .rate.part[data-v="6"]{background:rgba(126,217,154,.28);color:#b8ffd0}
+  .rate.task[data-v="0"]{color:var(--ink-faint)}
+  .rate.task[data-v="1"]{background:rgba(126,217,154,.2);color:var(--good)}
+  .rate.task[data-v="2"]{background:rgba(255,224,102,.15);color:var(--warn)}
+  .rate.task[data-v="3"]{background:rgba(240,152,136,.15);color:var(--bad)}
+
+  .note-cell{width:auto}
+  .note-cell input{width:100%;min-width:0;font-size:13px;background:transparent;border:none;color:var(--ink-dim);padding:4px}
+  .note-cell input:focus{outline:none;background:rgba(255,255,255,.04);border-radius:6px}
+
+  .table-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+  .row-count{font-size:13px;font-weight:800;color:var(--ink-dim)}
+
+  .shot-cell{
+    display:flex;flex-wrap:wrap;gap:6px;align-items:center;width:auto;
+    cursor:pointer;border-radius:8px;transition:background .15s;
+  }
+  .shot-cell:focus{outline:none}
+  .shot-cell.ready{background:rgba(232,184,56,.1);box-shadow:inset 0 0 0 2px rgba(232,184,56,.45)}
+  .shot-cell .paste-hint{
+    font-size:10px;font-weight:800;color:var(--gold2);letter-spacing:.04em;
+    padding:4px 6px;border-radius:6px;border:1px dashed rgba(232,184,56,.4);
+    display:none;white-space:nowrap;
+  }
+  .shot-cell.ready .paste-hint{display:block}
+  .shot-cell.ready .add-shot{display:none}
+  .thumb{width:52px;height:52px;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:pointer}
+  .thumb-wrap{position:relative}
+  .thumb-wrap button{
+    position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;
+    border:none;background:var(--bad);color:#fff;font-size:11px;cursor:pointer;line-height:1;
+  }
+  .add-shot{
+    width:52px;height:52px;border-radius:8px;border:1px dashed var(--line);
+    background:rgba(255,255,255,.03);color:var(--ink-faint);font-size:22px;cursor:pointer;
+  }
+  .add-shot:hover{border-color:var(--gold);color:var(--gold2)}
+  .pick-shot{
+    width:28px;height:52px;border-radius:8px;border:1px solid var(--line);
+    background:rgba(255,255,255,.03);color:var(--ink-faint);font-size:16px;cursor:pointer;
+  }
+  .pick-shot:hover{border-color:var(--gold);color:var(--gold2)}
+
+  .class-note{
+    background:var(--bg1);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);
+    padding:14px 16px;margin-bottom:14px;
+  }
+  .class-note h2{font-size:14px;color:var(--gold2);margin-bottom:8px}
+  .class-note textarea{width:100%;min-height:56px;resize:vertical}
+
+  .lightbox{
+    position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:50;display:none;
+    align-items:center;justify-content:center;padding:20px;
+  }
+  .lightbox.open{display:flex}
+  .lightbox img{max-width:100%;max-height:92vh;border-radius:12px}
+  .lightbox .close{position:fixed;top:16px;right:20px;font-size:28px;background:none;border:none;color:#fff;cursor:pointer}
+
+  .modal{
+    position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:60;display:none;
+    align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;
+  }
+  .modal.open{display:flex}
+  .modal-card{
+    width:min(920px,100%);background:var(--bg1);border:1px solid rgba(255,255,255,.1);
+    border-radius:var(--radius);padding:20px;margin-top:20px;margin-bottom:40px;
+  }
+  .modal-head{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px}
+  .modal-head h2{font-size:20px;color:var(--gold2);margin-right:auto}
+  .modal-filters{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;padding:12px;background:var(--bg2);border-radius:12px}
+  .report-list{display:flex;flex-direction:column;gap:12px;max-height:55vh;overflow-y:auto}
+  .report-card{
+    background:var(--bg0);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px 16px;
+  }
+  .report-card h3{font-size:16px;margin-bottom:6px;color:var(--ink)}
+  .report-meta{font-size:12px;color:var(--ink-faint);margin-bottom:10px}
+  .report-stats{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+  .stat{font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.06);color:var(--ink-dim)}
+  .report-notes{font-size:13px;color:var(--ink-dim);margin-bottom:10px;line-height:1.5}
+  .report-notes li{margin-left:18px;margin-bottom:4px}
+  .report-draft label{font-size:11px;font-weight:700;color:var(--gold2);display:block;margin-bottom:4px}
+  .report-draft textarea{
+    width:100%;min-height:72px;font-size:13px;line-height:1.5;resize:vertical;margin-bottom:8px;
+  }
+  .report-actions{display:flex;flex-wrap:wrap;gap:8px}
+  .modal-empty{padding:32px;text-align:center;color:var(--ink-faint)}
+
+  footer{text-align:center;padding:24px;font-size:12px;color:var(--ink-faint)}
+  @media(max-width:800px){
+    .hide-sm{display:none}
+    table{font-size:13px}
+    .rate{min-width:72px;font-size:11px;padding:6px 4px}
+  }
+</style>
+<link rel="stylesheet" href="hub-theme.css">
+</head>
+<body>
+
+<div class="top">
+  <h1><a href="index.html">← Teach</a> · Student notes</h1>
+  <span class="pill" id="saveStatus">Saved</span>
+  <div class="field"><label for="sessionDate">Date</label><input type="date" id="sessionDate"></div>
+  <div class="field"><label for="subject">Subject</label>
+    <select id="subject">
+      <option value="">— pick —</option>
+      <option>Maths</option><option>HASS</option><option>Science</option><option>English</option>
+      <option>Art</option><option>Drama</option><option>Spelling</option><option>Maths Facts</option><option>Reading</option>
+    </select>
+  </div>
+  <div class="field wide"><label for="lesson">Lesson / focus</label><input id="lesson" placeholder="e.g. L1A · Is an empty glass empty?"></div>
+  <button class="btn" id="rosterBtn" type="button">Class list</button>
+  <button class="btn good" id="reportBtn" type="button">Report cards</button>
+  <button class="btn" id="exportBtn" type="button">Export</button>
+  <button class="btn primary" id="newSessionBtn" type="button">New session</button>
+  <button class="theme-toggle" type="button"></button>
+</div>
+
+<div class="wrap">
+  <div class="roster-panel" id="rosterPanel">
+    <strong>Class list</strong> <span class="hint">— one name per line; names sync into the table as you type</span>
+    <textarea id="rosterText" placeholder="Alex&#10;Sam&#10;Jordan&#10;…"></textarea>
+    <div class="toolbar">
+      <button class="btn good" id="loadRosterBtn" type="button">Load into table</button>
+      <button class="btn" id="saveRosterBtn" type="button">Save list</button>
+      <button class="btn" id="addRowBtn" type="button">+ Add row</button>
+    </div>
+  </div>
+
+  <div class="class-note">
+    <h2>Whole-class note</h2>
+    <textarea id="classNote" placeholder="General observations, tech issues, lesson pacing…"></textarea>
+  </div>
+
+  <p class="hint" style="margin-bottom:10px">Tab through names and notes. Click a <b>Work</b> cell, then <b>⌘V / Ctrl+V</b> to paste a screenshot — it appears as a thumbnail. Click thumbnail to enlarge.</p>
+
+  <div class="table-bar">
+    <span class="row-count" id="rowCount">20 rows</span>
+    <button class="btn" id="addRowBtn2" type="button">+ Add row</button>
+    <button class="btn" id="removeRowBtn" type="button">− Remove row</button>
+  </div>
+
+  <div style="overflow-x:auto">
+  <table>
+    <colgroup>
+      <col style="width:34px">
+      <col style="width:152px">
+      <col style="width:84px">
+      <col style="width:102px">
+      <col style="width:84px">
+      <col style="width:27%">
+      <col style="width:26%">
+      <col style="width:36px">
+    </colgroup>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Student</th>
+        <th>Effort</th>
+        <th>Participation</th>
+        <th>Tasks</th>
+        <th>Notes / results</th>
+        <th>Work</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+  </div>
+
+  <footer>
+    <p>Data stays in your browser (localStorage). Sessions archive when you start a new one. <span id="archiveCount"></span></p>
+    <p><a href="https://github.com/planomy/teach">planomy/teach</a></p>
+  </footer>
+</div>
+
+<div class="modal" id="reportModal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2>Report card summaries</h2>
+      <button class="btn" id="exportReportCsv" type="button">Download CSV</button>
+      <button class="btn" id="exportReportTxt" type="button">Download text</button>
+      <button class="btn" id="closeReportBtn" type="button">Close</button>
+    </div>
+    <div class="modal-filters">
+      <div class="field"><label for="reportSubject">Subject</label>
+        <select id="reportSubject"><option value="">All subjects</option></select>
+      </div>
+      <div class="field"><label for="reportFrom">From</label><input type="date" id="reportFrom"></div>
+      <div class="field"><label for="reportTo">To</label><input type="date" id="reportTo"></div>
+      <div class="field" style="justify-content:flex-end">
+        <label>&nbsp;</label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:var(--ink-dim)">
+          <input type="checkbox" id="reportIncludeCurrent" checked> Include today's session
+        </label>
+      </div>
+      <button class="btn primary" id="refreshReportBtn" type="button" style="align-self:flex-end">Update</button>
+    </div>
+    <p class="hint" style="margin-bottom:12px">Per-student summaries from archived lessons. Edit draft comments, then copy into your report card system.</p>
+    <div class="report-list" id="reportList"></div>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox"><button class="close" type="button" aria-label="Close">✕</button><img alt="Student work"></div>
+<input type="file" id="filePick" accept="image/*" hidden>
+
+<script>
+const EFFORT = ['—','1 Low','2','3 OK','4','5 High'];
+const PART = ['—','Distracting','Avoiding','Withdrawing','Participating','Investing','Driving'];
+const TASK = ['—','Done','Partial','Not yet'];
+const DEFAULT_ROWS = 20;
+const ARCHIVE_KEY = 'teach-notes-archive';
+
+let session = loadSession();
+let pasteTargetId = null;
+let saveTimer = null;
+let rosterTimer = null;
+let reportData = [];
+
+function uid(){ return Math.random().toString(36).slice(2,10); }
+
+function flushSave(){
+  session.date = document.getElementById('sessionDate').value;
+  session.subject = document.getElementById('subject').value;
+  session.lesson = document.getElementById('lesson').value;
+  session.classNote = document.getElementById('classNote').value;
+  localStorage.setItem('teach-notes-session', JSON.stringify(session));
+}
+
+function loadArchive(){
+  try{
+    const raw = localStorage.getItem(ARCHIVE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){ return []; }
+}
+
+function saveArchive(list){
+  localStorage.setItem(ARCHIVE_KEY, JSON.stringify(list));
+}
+
+function sessionHasData(s){
+  if((s.classNote || '').trim()) return true;
+  return s.students.some(st => st.name || st.note || st.shots?.length || st.effort || st.part || st.task);
+}
+
+function snapshotSession(s){
+  return {
+    id: s.id,
+    date: s.date || '',
+    subject: s.subject || 'Unspecified',
+    lesson: s.lesson || '',
+    classNote: s.classNote || '',
+    archived: new Date().toISOString(),
+    students: s.students.map(st => ({
+      name: (st.name || '').trim(),
+      effort: st.effort || 0,
+      part: st.part || 0,
+      task: st.task || 0,
+      note: (st.note || '').trim(),
+      screenshots: st.shots?.length || 0
+    }))
+  };
+}
+
+function archiveCurrentSession(){
+  flushSave();
+  if(!sessionHasData(session)) return false;
+  const snap = snapshotSession(session);
+  const archive = loadArchive();
+  const i = archive.findIndex(a => a.id === snap.id);
+  if(i >= 0) archive[i] = snap;
+  else archive.unshift(snap);
+  while(archive.length > 300) archive.pop();
+  saveArchive(archive);
+  updateArchiveCount();
+  return true;
+}
+
+function updateArchiveCount(){
+  const n = loadArchive().length;
+  const el = document.getElementById('archiveCount');
+  if(el) el.textContent = n ? `${n} lesson${n===1?'':'s'} archived.` : 'No lessons archived yet.';
+}
+
+function avgRated(values){
+  const rated = values.filter(v => v > 0);
+  if(!rated.length) return null;
+  return rated.reduce((a, b) => a + b, 0) / rated.length;
+}
+
+function modeValue(values){
+  const rated = values.filter(v => v > 0);
+  if(!rated.length) return 0;
+  const counts = {};
+  rated.forEach(v => { counts[v] = (counts[v] || 0) + 1; });
+  return +Object.entries(counts).sort((a, b) => b[1] - a[1] || b[0] - a[0])[0][0];
+}
+
+function effortPhrase(avg){
+  if(avg == null) return '';
+  if(avg >= 4.5) return 'consistently demonstrated high effort';
+  if(avg >= 3.5) return 'showed good effort';
+  if(avg >= 2.5) return 'effort was variable';
+  return 'is encouraged to apply more consistent effort';
+}
+
+function partPhrase(mode){
+  if(!mode) return '';
+  if(mode >= 6) return 'often took a driving role in class activities';
+  if(mode >= 5) return 'invested actively in lessons';
+  if(mode >= 4) return 'participated well in class';
+  if(mode >= 3) return 'was sometimes withdrawn during lessons';
+  if(mode >= 2) return 'tended to avoid participation at times';
+  return 'was occasionally distracting to others';
+}
+
+function taskPhrase(done, partial, total){
+  if(!total) return '';
+  if(done === total) return 'completed tasks reliably';
+  if(done + partial === total) return 'mostly completed set tasks';
+  if(done > total / 2) return 'completed most set tasks';
+  return 'had difficulty completing tasks consistently';
+}
+
+function formatShortDate(d){
+  if(!d) return '';
+  const [y, m, day] = d.split('-');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${+day} ${months[+m - 1]}`;
+}
+
+function buildDraftComment(name, subject, stats, notes){
+  const bits = [];
+  const subj = subject && subject !== 'All subjects' ? subject : 'lessons';
+  if(stats.lessons) bits.push(`${name} was observed across ${stats.lessons} ${subj} lesson${stats.lessons===1?'':'s'}.`);
+  if(stats.partMode) bits.push(name.split(' ')[0] + ' ' + partPhrase(stats.partMode) + '.');
+  if(stats.effortAvg != null) bits.push(name.split(' ')[0] + ' ' + effortPhrase(stats.effortAvg) + '.');
+  if(stats.taskTotal) bits.push(name.split(' ')[0] + ' ' + taskPhrase(stats.taskDone, stats.taskPartial, stats.taskTotal) + '.');
+  if(notes.length){
+    const sample = notes.slice(0, 2).map(n => n.note).join('; ');
+    bits.push(`Notable observations: ${sample}.`);
+  }
+  return bits.join(' ');
+}
+
+function getSessionsForReport(includeCurrent){
+  const sessions = loadArchive().slice();
+  if(includeCurrent && sessionHasData(session)){
+    flushSave();
+    const snap = snapshotSession(session);
+    const i = sessions.findIndex(s => s.id === snap.id);
+    if(i >= 0) sessions[i] = snap;
+    else sessions.unshift(snap);
+  }
+  return sessions;
+}
+
+function buildStudentReports(sessions, filters){
+  const byName = new Map();
+  for(const sess of sessions){
+    if(filters.subject && sess.subject !== filters.subject) continue;
+    if(filters.from && sess.date && sess.date < filters.from) continue;
+    if(filters.to && sess.date && sess.date > filters.to) continue;
+    for(const st of sess.students){
+      if(!st.name) continue;
+      const key = st.name.toLowerCase();
+      if(!byName.has(key)) byName.set(key, { name: st.name, entries: [] });
+      byName.get(key).entries.push({
+        date: sess.date,
+        subject: sess.subject,
+        lesson: sess.lesson,
+        effort: st.effort,
+        part: st.part,
+        task: st.task,
+        note: st.note
+      });
+    }
+  }
+  const subjectLabel = filters.subject || 'All subjects';
+  return [...byName.values()].sort((a, b) => a.name.localeCompare(b.name)).map(row => {
+    const entries = row.entries.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    const efforts = entries.map(e => e.effort);
+    const parts = entries.map(e => e.part);
+    const tasks = entries.map(e => e.task);
+    const notes = entries.filter(e => e.note).map(e => ({
+      date: e.date,
+      subject: e.subject,
+      lesson: e.lesson,
+      note: e.note
+    }));
+    const stats = {
+      lessons: entries.length,
+      effortAvg: avgRated(efforts),
+      effortMin: Math.min(...efforts.filter(v => v > 0), 99) === 99 ? null : Math.min(...efforts.filter(v => v > 0)),
+      effortMax: Math.max(...efforts.filter(v => v > 0), 0) || null,
+      partMode: modeValue(parts),
+      taskDone: tasks.filter(t => t === 1).length,
+      taskPartial: tasks.filter(t => t === 2).length,
+      taskTotal: tasks.filter(t => t > 0).length
+    };
+    return {
+      name: row.name,
+      subject: subjectLabel,
+      stats,
+      notes,
+      draft: buildDraftComment(row.name, subjectLabel, stats, notes)
+    };
+  });
+}
+
+function populateReportSubjects(){
+  const sel = document.getElementById('reportSubject');
+  const current = sel.value;
+  const subjects = new Set();
+  getSessionsForReport(true).forEach(s => { if(s.subject) subjects.add(s.subject); });
+  sel.innerHTML = '<option value="">All subjects</option>' +
+    [...subjects].sort().map(s => `<option>${esc(s)}</option>`).join('');
+  sel.value = current;
+}
+
+function renderReportCards(){
+  const filters = {
+    subject: document.getElementById('reportSubject').value,
+    from: document.getElementById('reportFrom').value,
+    to: document.getElementById('reportTo').value
+  };
+  const includeCurrent = document.getElementById('reportIncludeCurrent').checked;
+  reportData = buildStudentReports(getSessionsForReport(includeCurrent), filters);
+  const list = document.getElementById('reportList');
+  if(!reportData.length){
+    list.innerHTML = '<div class="modal-empty">No student data for this filter yet.<br>Keep noting lessons — they archive when you start a <b>New session</b>.</div>';
+    return;
+  }
+  list.innerHTML = reportData.map((r, i) => {
+    const s = r.stats;
+    const effortLabel = s.effortAvg != null ? `Effort avg ${s.effortAvg.toFixed(1)}/5` : 'Effort —';
+    const partLabel = s.partMode ? `Participation: ${PART[s.partMode]}` : 'Participation —';
+    const taskLabel = s.taskTotal ? `Tasks ${s.taskDone}/${s.taskTotal} done` : 'Tasks —';
+    const notesHtml = r.notes.length
+      ? `<ul class="report-notes">${r.notes.map(n => `<li><b>${formatShortDate(n.date)}</b>${n.lesson ? ' · ' + esc(n.lesson) : ''}: ${esc(n.note)}</li>`).join('')}</ul>`
+      : '<p class="report-notes">No written notes recorded.</p>';
+    return `
+      <div class="report-card" data-idx="${i}">
+        <h3>${esc(r.name)}</h3>
+        <div class="report-meta">${esc(r.subject)} · ${s.lessons} lesson${s.lessons===1?'':'s'} recorded</div>
+        <div class="report-stats">
+          <span class="stat">${effortLabel}</span>
+          <span class="stat">${partLabel}</span>
+          <span class="stat">${taskLabel}</span>
+        </div>
+        ${notesHtml}
+        <div class="report-draft">
+          <label for="draft-${i}">Draft report comment</label>
+          <textarea id="draft-${i}" data-draft>${esc(r.draft)}</textarea>
+          <div class="report-actions">
+            <button class="btn good copy-draft" type="button" data-idx="${i}">Copy comment</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function csvEscape(v){
+  return '"' + String(v || '').replace(/"/g, '""') + '"';
+}
+
+function downloadText(filename, text, type = 'text/plain'){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type }));
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function getDraftText(i){
+  const ta = document.getElementById(`draft-${i}`);
+  return ta ? ta.value : (reportData[i]?.draft || '');
+}
+
+function exportReportCsv(){
+  if(!reportData.length){ flashStatus('No report data'); return; }
+  const rows = [['Student','Subject','Lessons','Avg effort','Participation','Tasks done','Task total','Notes','Draft comment']];
+  reportData.forEach((r, i) => {
+    const notes = r.notes.map(n => `${n.date}: ${n.note}`).join(' | ');
+    rows.push([
+      r.name, r.subject, r.stats.lessons,
+      r.stats.effortAvg != null ? r.stats.effortAvg.toFixed(1) : '',
+      r.stats.partMode ? PART[r.stats.partMode] : '',
+      r.stats.taskDone, r.stats.taskTotal, notes, getDraftText(i)
+    ]);
+  });
+  const csv = rows.map(row => row.map(csvEscape).join(',')).join('\n');
+  const label = document.getElementById('reportSubject').value || 'all-subjects';
+  downloadText(`report-cards-${label.replace(/[^\w\-]+/g,'-')}.csv`, csv, 'text/csv');
+}
+
+function exportReportTxt(){
+  if(!reportData.length){ flashStatus('No report data'); return; }
+  const subject = document.getElementById('reportSubject').value || 'All subjects';
+  const from = document.getElementById('reportFrom').value;
+  const to = document.getElementById('reportTo').value;
+  const lines = [`Report card summaries — ${subject}`, `Generated ${new Date().toLocaleDateString()}`];
+  if(from || to) lines.push(`Period: ${from || '…'} to ${to || '…'}`);
+  lines.push('');
+  reportData.forEach((r, i) => {
+    lines.push('—'.repeat(50));
+    lines.push(r.name.toUpperCase());
+    lines.push(`${r.stats.lessons} lessons · Effort avg ${r.stats.effortAvg?.toFixed(1) ?? '—'} · Participation ${r.stats.partMode ? PART[r.stats.partMode] : '—'}`);
+    if(r.notes.length){
+      lines.push('Notes:');
+      r.notes.forEach(n => lines.push(`  ${n.date}: ${n.note}`));
+    }
+    lines.push('');
+    lines.push(getDraftText(i));
+    lines.push('');
+  });
+  downloadText(`report-cards-${subject.replace(/[^\w\-]+/g,'-')}.txt`, lines.join('\n'));
+}
+
+function openReportModal(){
+  populateReportSubjects();
+  const today = new Date();
+  const termStart = new Date(today);
+  termStart.setDate(today.getDate() - 70);
+  if(!document.getElementById('reportFrom').value)
+    document.getElementById('reportFrom').value = termStart.toISOString().slice(0, 10);
+  if(!document.getElementById('reportTo').value)
+    document.getElementById('reportTo').value = today.toISOString().slice(0, 10);
+  renderReportCards();
+  document.getElementById('reportModal').classList.add('open');
+}
+
+function defaultSession(){
+  return {
+    id: uid(),
+    date: new Date().toISOString().slice(0,10),
+    subject: '',
+    lesson: '',
+    classNote: '',
+    students: Array.from({length: DEFAULT_ROWS}, () => newStudent())
+  };
+}
+
+function loadSession(){
+  try{
+    const raw = localStorage.getItem('teach-notes-session');
+    if(raw){
+      const s = JSON.parse(raw);
+      if(!Array.isArray(s.students) || !s.students.length)
+        s.students = Array.from({length: DEFAULT_ROWS}, () => newStudent());
+      else
+        while(s.students.length < DEFAULT_ROWS) s.students.push(newStudent());
+      return s;
+    }
+  }catch(e){}
+  return defaultSession();
+}
+
+function loadRoster(){
+  return localStorage.getItem('teach-notes-roster') || '';
+}
+
+function parseRoster(text){
+  return String(text || '').split(/\n/).map(n => n.trim()).filter(Boolean);
+}
+
+function applyRosterToTable(save = true){
+  const names = parseRoster(document.getElementById('rosterText').value);
+  if(!names.length) return;
+  const need = Math.max(DEFAULT_ROWS, names.length, session.students.length);
+  while(session.students.length < need) session.students.push(newStudent());
+  names.forEach((n, i) => { session.students[i].name = n; });
+  render();
+  if(save) scheduleSave();
+}
+
+function saveRoster(text){
+  localStorage.setItem('teach-notes-roster', text);
+}
+
+function scheduleSave(){
+  const el = document.getElementById('saveStatus');
+  el.textContent = 'Saving…';
+  el.classList.add('saving');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    session.date = document.getElementById('sessionDate').value;
+    session.subject = document.getElementById('subject').value;
+    session.lesson = document.getElementById('lesson').value;
+    session.classNote = document.getElementById('classNote').value;
+    localStorage.setItem('teach-notes-session', JSON.stringify(session));
+    el.textContent = 'Saved';
+    el.classList.remove('saving');
+  }, 350);
+}
+
+function newStudent(name=''){
+  return { id: uid(), name, effort:0, part:0, task:0, note:'', shots:[] };
+}
+
+function syncHeader(){
+  document.getElementById('sessionDate').value = session.date || '';
+  document.getElementById('subject').value = session.subject || '';
+  document.getElementById('lesson').value = session.lesson || '';
+  document.getElementById('classNote').value = session.classNote || '';
+  document.getElementById('rosterText').value = loadRoster();
+}
+
+function cycle(field, val, labels){
+  return (val + 1) % labels.length;
+}
+
+function render(){
+  const tb = document.getElementById('tbody');
+  document.getElementById('rowCount').textContent = `${session.students.length} row${session.students.length===1?'':'s'}`;
+  document.getElementById('removeRowBtn').disabled = session.students.length <= 1;
+  tb.innerHTML = session.students.map((s, i) => `
+    <tr data-id="${s.id}">
+      <td class="num-cell">${i + 1}</td>
+      <td class="name-cell"><input value="${esc(s.name)}" placeholder="Student ${i + 1}" data-k="name"></td>
+      <td><button type="button" class="rate effort" data-k="effort" data-v="${s.effort}">${EFFORT[s.effort]}</button></td>
+      <td><button type="button" class="rate part" data-k="part" data-v="${s.part}">${PART[s.part]}</button></td>
+      <td><button type="button" class="rate task" data-k="task" data-v="${s.task}">${TASK[s.task]}</button></td>
+      <td class="note-cell"><input value="${esc(s.note)}" placeholder="Quick note…" data-k="note"></td>
+      <td class="shot-cell paste-zone" tabindex="0" title="Click, then ⌘V / Ctrl+V to paste screenshot">
+        ${s.shots.map((src,si)=>`<span class="thumb-wrap"><img class="thumb" src="${src}" alt="Work ${si+1}"><button type="button" data-rm="${si}" title="Remove">×</button></span>`).join('')}
+        <span class="paste-hint">⌘V paste</span>
+        <button class="add-shot" type="button" data-arm title="Arm paste">📋</button>
+        <button class="pick-shot" type="button" data-shot title="Pick image file">+</button>
+      </td>
+      <td><button class="btn" type="button" data-del title="Remove row" style="padding:6px 10px;font-size:11px">✕</button></td>
+    </tr>
+  `).join('');
+}
+
+function esc(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+}
+
+function findStudent(id){ return session.students.find(s => s.id === id); }
+
+function armPasteRow(studentId){
+  pasteTargetId = studentId;
+  document.querySelectorAll('.shot-cell.ready').forEach(c => c.classList.remove('ready'));
+  const cell = document.querySelector(`tr[data-id="${studentId}"] .shot-cell`);
+  if(cell){
+    cell.classList.add('ready');
+    cell.focus();
+  }
+}
+
+function flashStatus(msg){
+  const el = document.getElementById('saveStatus');
+  const prev = el.textContent;
+  el.textContent = msg;
+  setTimeout(() => { if(el.textContent === msg) el.textContent = prev; }, 2200);
+}
+
+function compressImage(file, maxW=1200, quality=0.82){
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if(w > maxW){ h = Math.round(h * maxW / w); w = maxW; }
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(c.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = fr.result;
+    };
+    fr.onerror = reject;
+    fr.readAsDataURL(file);
+  });
+}
+
+function addShot(studentId, dataUrl){
+  const s = findStudent(studentId);
+  if(!s) return;
+  s.shots.push(dataUrl);
+  if(s.shots.length > 6) s.shots = s.shots.slice(-6);
+  render();
+  scheduleSave();
+}
+
+function cycleRate(s, k, rate){
+  if(k === 'effort'){ s.effort = cycle('effort', s.effort, EFFORT); rate.dataset.v = s.effort; rate.textContent = EFFORT[s.effort]; }
+  if(k === 'part'){ s.part = cycle('part', s.part, PART); rate.dataset.v = s.part; rate.textContent = PART[s.part]; }
+  if(k === 'task'){ s.task = cycle('task', s.task, TASK); rate.dataset.v = s.task; rate.textContent = TASK[s.task]; }
+  scheduleSave();
+}
+
+document.getElementById('tbody').addEventListener('click', e => {
+  const tr = e.target.closest('tr[data-id]');
+  if(!tr) return;
+  const id = tr.dataset.id;
+  const s = findStudent(id);
+  if(!s) return;
+
+  if(e.target.dataset.del != null){
+    session.students = session.students.filter(x => x.id !== id);
+    render(); scheduleSave(); return;
+  }
+  if(e.target.dataset.rm != null){
+    s.shots.splice(+e.target.dataset.rm, 1);
+    render(); scheduleSave(); return;
+  }
+  if(e.target.classList.contains('thumb')){
+    document.querySelector('#lightbox img').src = e.target.src;
+    document.getElementById('lightbox').classList.add('open');
+    return;
+  }
+  if(e.target.dataset.shot != null){
+    pasteTargetId = id;
+    document.getElementById('filePick').click();
+    return;
+  }
+  if(e.target.dataset.arm != null || (e.target.closest('.paste-zone') && !e.target.closest('.thumb-wrap'))){
+    armPasteRow(id);
+    return;
+  }
+  const rate = e.target.closest('.rate');
+  if(rate){
+    cycleRate(s, rate.dataset.k, rate);
+  }
+});
+
+document.getElementById('tbody').addEventListener('keydown', e => {
+  const rate = e.target.closest('.rate');
+  if(rate && (e.key === ' ' || e.key === 'Enter')){
+    e.preventDefault();
+    const tr = e.target.closest('tr[data-id]');
+    const s = findStudent(tr.dataset.id);
+    if(s) cycleRate(s, rate.dataset.k, rate);
+  }
+});
+
+document.getElementById('tbody').addEventListener('input', e => {
+  const tr = e.target.closest('tr[data-id]');
+  if(!tr) return;
+  const s = findStudent(tr.dataset.id);
+  if(!s) return;
+  const k = e.target.dataset.k;
+  if(k === 'name') s.name = e.target.value;
+  if(k === 'note') s.note = e.target.value;
+  scheduleSave();
+});
+
+document.getElementById('tbody').addEventListener('focusin', e => {
+  const tr = e.target.closest('tr[data-id]');
+  document.querySelectorAll('tr.focus').forEach(r => r.classList.remove('focus'));
+  if(tr) tr.classList.add('focus');
+  const shot = e.target.closest('.paste-zone');
+  if(shot && tr) armPasteRow(tr.dataset.id);
+});
+
+['sessionDate','subject','lesson','classNote'].forEach(id => {
+  document.getElementById(id).addEventListener('input', scheduleSave);
+  document.getElementById(id).addEventListener('change', scheduleSave);
+});
+
+document.getElementById('rosterBtn').onclick = () => {
+  document.getElementById('rosterPanel').classList.toggle('open');
+};
+document.getElementById('saveRosterBtn').onclick = () => {
+  saveRoster(document.getElementById('rosterText').value);
+  applyRosterToTable();
+  document.getElementById('saveStatus').textContent = 'Class list saved';
+};
+document.getElementById('loadRosterBtn').onclick = () => {
+  saveRoster(document.getElementById('rosterText').value);
+  applyRosterToTable();
+};
+document.getElementById('rosterText').addEventListener('input', () => {
+  clearTimeout(rosterTimer);
+  rosterTimer = setTimeout(() => {
+    saveRoster(document.getElementById('rosterText').value);
+    applyRosterToTable();
+  }, 400);
+});
+function addRow(){
+  session.students.push(newStudent(''));
+  render(); scheduleSave();
+}
+function removeRow(){
+  if(session.students.length <= 1) return;
+  session.students.pop();
+  render(); scheduleSave();
+}
+document.getElementById('addRowBtn').onclick = addRow;
+document.getElementById('addRowBtn2').onclick = addRow;
+document.getElementById('removeRowBtn').onclick = removeRow;
+
+document.getElementById('newSessionBtn').onclick = () => {
+  if(sessionHasData(session) && !confirm('Archive this session and start fresh? Your notes will be saved for report cards.')) return;
+  archiveCurrentSession();
+  session = defaultSession();
+  syncHeader(); render(); scheduleSave();
+};
+
+document.getElementById('reportBtn').onclick = openReportModal;
+document.getElementById('closeReportBtn').onclick = () => document.getElementById('reportModal').classList.remove('open');
+document.getElementById('refreshReportBtn').onclick = renderReportCards;
+document.getElementById('exportReportCsv').onclick = exportReportCsv;
+document.getElementById('exportReportTxt').onclick = exportReportTxt;
+document.getElementById('reportModal').addEventListener('click', e => {
+  if(e.target.id === 'reportModal') document.getElementById('reportModal').classList.remove('open');
+});
+document.getElementById('reportList').addEventListener('click', e => {
+  if(e.target.classList.contains('copy-draft')){
+    const i = +e.target.dataset.idx;
+    const text = getDraftText(i);
+    navigator.clipboard.writeText(text).then(() => flashStatus('Copied')).catch(() => {
+      const ta = document.getElementById(`draft-${i}`);
+      ta.select(); document.execCommand('copy'); flashStatus('Copied');
+    });
+  }
+});
+
+document.getElementById('exportBtn').onclick = () => {
+  scheduleSave();
+  const payload = {
+    exported: new Date().toISOString(),
+    ...session,
+    students: session.students.map(s => ({
+      name: s.name,
+      effort: EFFORT[s.effort],
+      participation: PART[s.part],
+      tasks: TASK[s.task],
+      note: s.note,
+      screenshots: s.shots.length
+    }))
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  const label = [session.date, session.subject, session.lesson].filter(Boolean).join(' · ') || 'session';
+  a.href = URL.createObjectURL(blob);
+  a.download = `teach-notes-${label.replace(/[^\w\-]+/g,'-')}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+
+  const withImages = session.students.some(s => s.shots.length);
+  if(withImages){
+    const full = new Blob([JSON.stringify({...session, exported: new Date().toISOString()}, null, 2)], {type:'application/json'});
+    const b = document.createElement('a');
+    b.href = URL.createObjectURL(full);
+    b.download = `teach-notes-full-${label.replace(/[^\w\-]+/g,'-')}.json`;
+    b.click();
+    URL.revokeObjectURL(b.href);
+  }
+};
+
+document.getElementById('filePick').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if(file && pasteTargetId){
+    try{
+      const url = await compressImage(file);
+      addShot(pasteTargetId, url);
+    }catch(err){ alert('Could not load image'); }
+  }
+  e.target.value = '';
+  pasteTargetId = null;
+});
+
+document.addEventListener('paste', async e => {
+  const items = e.clipboardData?.items;
+  if(!items) return;
+  for(const item of items){
+    if(item.type.startsWith('image/')){
+      e.preventDefault();
+      const file = item.getAsFile();
+      let id = pasteTargetId;
+      if(!id){
+        const ready = document.querySelector('.shot-cell.ready');
+        id = ready?.closest('tr[data-id]')?.dataset.id;
+      }
+      if(!id){
+        const focused = document.querySelector('tr.focus[data-id]');
+        id = focused?.dataset.id;
+      }
+      if(!id){ flashStatus('Click a Work cell first'); return; }
+      try{
+        const url = await compressImage(file);
+        addShot(id, url);
+        armPasteRow(id);
+        flashStatus('Screenshot added');
+      }catch(err){ flashStatus('Could not paste image'); }
+      break;
+    }
+  }
+});
+
+document.getElementById('lightbox').onclick = e => {
+  if(e.target.id === 'lightbox' || e.target.classList.contains('close'))
+    document.getElementById('lightbox').classList.remove('open');
+};
+
+const params = new URLSearchParams(location.search);
+if(params.get('subject')) session.subject = params.get('subject');
+if(params.get('lesson')) session.lesson = params.get('lesson');
+
+syncHeader();
+applyRosterToTable(false);
+render();
+updateArchiveCount();
+</script>
+<script src="hub-theme.js"></script>
+</body>
+</html>

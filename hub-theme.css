@@ -1,0 +1,73 @@
+/* Teach hub — light / dark theme */
+[data-theme="light"]{
+  color-scheme:light;
+  --bg0:#f3f1f8;
+  --bg1:#ffffff;
+  --bg2:#ebe8f2;
+  --ink:#1a1528;
+  --ink-dim:#3f3856;
+  --ink-faint:#6b6380;
+  --line:#c4bdd4;
+  --gold:#b88200;
+  --gold2:#8a5f00;
+  --good:#2a9d5c;
+  --warn:#b88900;
+  --bad:#c44d3a;
+}
+
+.page-top{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px;
+}
+.page-top h1{margin-bottom:0}
+
+.theme-toggle{
+  flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;
+  width:36px;height:36px;border-radius:999px;border:1px solid var(--line);
+  background:var(--bg2);color:var(--ink);cursor:pointer;padding:0;
+  transition:border-color .15s,background .15s;
+}
+.theme-toggle:hover{border-color:var(--gold)}
+.theme-toggle svg{width:17px;height:17px;display:block}
+.top .theme-toggle{margin-left:auto}
+.theme-toggle .icon-moon{display:none}
+[data-theme="light"] .theme-toggle .icon-sun{display:none}
+[data-theme="light"] .theme-toggle .icon-moon{display:block}
+
+/* Index dashboard */
+[data-theme="light"] .term-block{
+  border-color:rgba(0,0,0,.08);
+  box-shadow:0 12px 32px rgba(30,24,48,.07);
+}
+[data-theme="light"] .term-head{border-bottom-color:rgba(0,0,0,.08)}
+[data-theme="light"] .unit{
+  background:rgba(0,0,0,.025);
+  border-color:rgba(0,0,0,.09);
+}
+[data-theme="light"] a.unit:hover{background:rgba(0,0,0,.05)}
+[data-theme="light"] .badge.soon{
+  background:rgba(0,0,0,.04);
+  border-color:rgba(0,0,0,.1);
+}
+[data-theme="light"] .tool-card{border-color:rgba(0,0,0,.1)!important;background:rgba(255,255,255,.7)!important}
+[data-theme="light"] .tool-card.events strong{color:#9a6800}
+[data-theme="light"] .tool-card.meetings strong{color:#3d6eb0}
+[data-theme="light"] .tool-card.reminders strong{color:#b85a48}
+[data-theme="light"] .tool-card strong{color:#2a7a4a}
+[data-theme="light"] .tool-list .row-item{border-bottom-color:rgba(0,0,0,.06)}
+[data-theme="light"] .tool-expand:hover{background:rgba(0,0,0,.06)}
+
+/* Subpages — sticky / top bars */
+[data-theme="light"] .top{
+  background:rgba(243,241,248,.95);
+  border-bottom-color:rgba(0,0,0,.08);
+}
+[data-theme="light"] .card,
+[data-theme="light"] .class-note,
+[data-theme="light"] .roster-panel,
+[data-theme="light"] .modal-card{
+  border-color:rgba(0,0,0,.08);
+}
+[data-theme="light"] td{background:var(--bg1);border-color:rgba(0,0,0,.07)}
+[data-theme="light"] tr.focus td{background:rgba(184,130,0,.08);border-color:rgba(184,130,0,.25)}
+[data-theme="light"] .item{border-bottom-color:rgba(0,0,0,.06)}
+[data-theme="light"] .modal{background:rgba(0,0,0,.45)}
