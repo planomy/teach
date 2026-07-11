@@ -82,6 +82,15 @@
   }
   .roster-panel.open{display:block}
   .roster-panel textarea{width:100%;min-height:90px;margin:8px 0;resize:vertical}
+  .roster-head{
+    display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;
+  }
+  .roster-head .roster-close{
+    margin-left:auto;align-self:center;
+    width:32px;height:32px;border-radius:8px;border:1px solid var(--line);
+    background:transparent;color:var(--ink-faint);font-size:18px;line-height:1;cursor:pointer;
+  }
+  .roster-head .roster-close:hover{color:var(--ink);border-color:var(--gold);background:rgba(255,255,255,.04)}
 
   table{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0 6px}
   th{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-faint);text-align:left;padding:0 8px 4px}
@@ -94,6 +103,8 @@
   .name-cell input{width:100%;min-width:0;background:transparent;border:none;color:var(--ink);font-weight:700;font-size:13px;padding:4px}
   .name-cell input:focus{outline:none;background:rgba(255,255,255,.05);border-radius:6px}
   .heat-cell{width:44px;text-align:center;padding:6px 4px!important}
+  .rate-cell{text-align:center}
+  th.rate-cell{text-align:center}
   .heat{
     --heat: #6a7080;
     width:28px;height:28px;margin:0 auto;border-radius:50%;
@@ -114,11 +125,14 @@
   .heat.empty::after{
     content:'';width:6px;height:6px;border-radius:50%;background:var(--ink-faint);opacity:.45;
   }
+  .heat.carried{opacity:.85}
 
   .rate{
-    min-width:80px;text-align:center;font-size:12px;font-weight:800;padding:7px 5px;border-radius:8px;
+    display:inline-flex;align-items:center;justify-content:center;
+    min-width:80px;text-align:center;font-size:12px;font-weight:800;padding:7px 8px;border-radius:8px;
     cursor:pointer;border:1px solid transparent;user-select:none;white-space:nowrap;
-    font-family:inherit;background:none;color:inherit;
+    font-family:inherit;background:none;color:inherit;margin:0 auto;line-height:1.2;
+    box-sizing:border-box;
   }
   .rate:focus{outline:2px solid var(--gold);outline-offset:1px}
   .rate:hover{border-color:var(--line)}
@@ -198,13 +212,41 @@
     align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;
   }
   .modal.open{display:flex}
+  .modal.centred{
+    align-items:center;justify-content:center;padding:20px 16px;
+  }
   .modal-card{
     width:min(920px,100%);background:var(--bg1);border:1px solid rgba(255,255,255,.1);
     border-radius:var(--radius);padding:20px;margin-top:20px;margin-bottom:40px;
   }
+  .modal.centred .modal-card{
+    margin:0;width:min(420px,100%);
+    box-shadow:0 24px 64px rgba(0,0,0,.45);
+  }
   .modal-head{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px}
   .modal-head h2{font-size:20px;color:var(--gold2);margin-right:auto}
   .modal-filters{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;padding:12px;background:var(--bg2);border-radius:12px}
+  .dialog-body{font-size:14px;line-height:1.5;color:var(--ink-dim);margin-bottom:16px}
+  .dialog-body p{margin:0 0 10px}
+  .dialog-clear{
+    margin:0 0 14px;padding:10px 12px;border-radius:10px;
+    background:rgba(240,152,136,.1);border:1px solid rgba(240,152,136,.25);
+    font-size:13px;color:var(--ink-dim);line-height:1.45;
+  }
+  .dialog-opts{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+  .dialog-opt{
+    display:flex;align-items:flex-start;gap:10px;padding:12px 14px;
+    border-radius:12px;border:1px solid rgba(255,255,255,.1);
+    background:var(--bg2);cursor:pointer;transition:border-color .15s,background .15s;
+  }
+  .dialog-opt:hover{border-color:rgba(232,184,56,.35)}
+  .dialog-opt:has(input:checked){
+    border-color:rgba(232,184,56,.5);background:rgba(232,184,56,.1);
+  }
+  .dialog-opt input{margin-top:3px;accent-color:var(--gold)}
+  .dialog-opt strong{display:block;font-size:14px;color:var(--ink);margin-bottom:2px}
+  .dialog-opt span{display:block;font-size:12px;color:var(--ink-faint);line-height:1.4}
+  .dialog-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
   .report-list{display:flex;flex-direction:column;gap:12px;max-height:55vh;overflow-y:auto}
   .report-card{
     background:var(--bg0);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px 16px;
@@ -271,6 +313,7 @@
         <button type="button" role="menuitem" id="saveWorkBtn">Save work…</button>
         <button type="button" role="menuitem" id="importBtn">Import</button>
         <button type="button" role="menuitem" id="exportBtn">Export</button>
+        <button type="button" role="menuitem" id="newTermBtn">New term…</button>
       </div>
     </div>
   </div>
@@ -278,7 +321,11 @@
 
 <div class="wrap">
   <div class="roster-panel" id="rosterPanel">
-    <strong>Class list</strong> <span class="hint">— one name per line; names sync into the table as you type</span>
+    <div class="roster-head">
+      <strong>Class list</strong>
+      <span class="hint">— one name per line; names sync into the table as you type</span>
+      <button class="roster-close" id="rosterCloseBtn" type="button" aria-label="Close class list">✕</button>
+    </div>
     <textarea id="rosterText" placeholder="Alex&#10;Sam&#10;Jordan&#10;…"></textarea>
     <div class="toolbar">
       <button class="btn good" id="loadRosterBtn" type="button">Load into table</button>
@@ -318,9 +365,9 @@
         <th>#</th>
         <th>Student</th>
         <th title="Combined effort, participation & tasks">Heat</th>
-        <th>Effort</th>
-        <th>Participation</th>
-        <th>Tasks</th>
+        <th class="rate-cell">Effort</th>
+        <th class="rate-cell">Participation</th>
+        <th class="rate-cell">Tasks</th>
         <th>Notes / results</th>
         <th>Work</th>
         <th></th>
@@ -361,6 +408,46 @@
     </div>
     <p class="hint" style="margin-bottom:12px">Per-student summaries from archived lessons. Edit draft comments, then copy into your report card system.</p>
     <div class="report-list" id="reportList"></div>
+  </div>
+</div>
+
+<div class="modal centred" id="newTermModal" role="dialog" aria-modal="true" aria-labelledby="newTermTitle">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2 id="newTermTitle">Start a new term</h2>
+      <button class="btn" id="newTermCancelX" type="button" aria-label="Close">✕</button>
+    </div>
+    <div class="dialog-body">
+      <div class="dialog-clear">Always cleared: lesson archive, current ratings, notes, and pasted work.</div>
+      <p>Choose what to carry into the new term:</p>
+    </div>
+    <div class="dialog-opts">
+      <label class="dialog-opt">
+        <input type="checkbox" id="newTermKeepNames" checked>
+        <span>
+          <strong>Keep student names</strong>
+          <span>Class list stays in the table ready for day one.</span>
+        </span>
+      </label>
+      <label class="dialog-opt">
+        <input type="checkbox" id="newTermKeepHeat" checked>
+        <span>
+          <strong>Keep heat</strong>
+          <span>Carry each student’s latest heat until you rate them again.</span>
+        </span>
+      </label>
+      <label class="dialog-opt">
+        <input type="checkbox" id="newTermExport">
+        <span>
+          <strong>Export current session first</strong>
+          <span>Download a JSON backup before anything is wiped.</span>
+        </span>
+      </label>
+    </div>
+    <div class="dialog-actions">
+      <button class="btn" id="newTermCancelBtn" type="button">Cancel</button>
+      <button class="btn primary" id="newTermConfirmBtn" type="button">Start new term</button>
+    </div>
   </div>
 </div>
 
@@ -1015,9 +1102,17 @@ function cycle(field, val, labels){
 }
 
 function heatHtml(st){
-  const h = HubStore.studentHeat(st);
+  let h = HubStore.studentHeat(st);
+  let carried = false;
+  if(!h){
+    h = HubStore.getHeatCarryFor(st.name);
+    carried = !!h;
+  }
   if(!h) return `<span class="heat empty" title="No ratings yet" aria-label="No heat yet"></span>`;
-  return `<span class="heat" style="--heat:${h.color}" title="Heat ${h.pct}% · ${h.label} (effort + participation + tasks)" aria-label="Heat ${h.pct} percent, ${h.label}">${h.pct}</span>`;
+  const title = carried
+    ? `Carried heat ${h.pct}% · ${h.label} (from last term — rates again when you mark this lesson)`
+    : `Heat ${h.pct}% · ${h.label} (effort + participation + tasks)`;
+  return `<span class="heat${carried ? ' carried' : ''}" style="--heat:${h.color}" title="${title}" aria-label="${carried ? 'Carried heat' : 'Heat'} ${h.pct} percent, ${h.label}">${h.pct}</span>`;
 }
 
 function paintHeat(tr, st){
@@ -1034,9 +1129,9 @@ function render(){
       <td class="num-cell">${i + 1}</td>
       <td class="name-cell"><input value="${esc(s.name)}" placeholder="Student ${i + 1}" data-k="name"></td>
       <td class="heat-cell">${heatHtml(s)}</td>
-      <td><button type="button" class="rate effort" data-k="effort" data-v="${s.effort}">${EFFORT[s.effort]}</button></td>
-      <td><button type="button" class="rate part" data-k="part" data-v="${s.part}">${PART[s.part]}</button></td>
-      <td><button type="button" class="rate task" data-k="task" data-v="${s.task}">${TASK[s.task]}</button></td>
+      <td class="rate-cell"><button type="button" class="rate effort" data-k="effort" data-v="${s.effort}">${EFFORT[s.effort]}</button></td>
+      <td class="rate-cell"><button type="button" class="rate part" data-k="part" data-v="${s.part}">${PART[s.part]}</button></td>
+      <td class="rate-cell"><button type="button" class="rate task" data-k="task" data-v="${s.task}">${TASK[s.task]}</button></td>
       <td class="note-cell"><input value="${esc(s.note)}" placeholder="Quick note…" data-k="note"></td>
       <td class="shot-cell paste-zone" tabindex="0" title="Click, then ⌘V / Ctrl+V to paste screenshot">
         ${s.shots.map((src,si)=>`<span class="thumb-wrap"><img class="thumb" src="${src}" alt="Work ${si+1}"><button type="button" data-rm="${si}" title="Remove">×</button></span>`).join('')}
@@ -1218,6 +1313,9 @@ document.addEventListener('keydown', e => {
 document.getElementById('rosterBtn').onclick = () => {
   document.getElementById('rosterPanel').classList.toggle('open');
 };
+document.getElementById('rosterCloseBtn').onclick = () => {
+  document.getElementById('rosterPanel').classList.remove('open');
+};
 document.getElementById('saveRosterBtn').onclick = () => {
   saveRoster(document.getElementById('rosterText').value);
   applyRosterToTable();
@@ -1259,6 +1357,72 @@ document.getElementById('newSessionBtn').onclick = async () => {
   session = freshSessionKeepingNames();
   syncHeader(); render(); scheduleSave();
 };
+
+document.getElementById('newTermBtn').onclick = () => {
+  closeGearMenu();
+  document.getElementById('newTermKeepNames').checked = true;
+  document.getElementById('newTermKeepHeat').checked = true;
+  document.getElementById('newTermExport').checked = false;
+  document.getElementById('newTermModal').classList.add('open');
+};
+
+function closeNewTermModal(){
+  document.getElementById('newTermModal').classList.remove('open');
+}
+
+async function confirmNewTerm(){
+  const keepNames = document.getElementById('newTermKeepNames').checked;
+  const keepHeat = document.getElementById('newTermKeepHeat').checked;
+  const doExport = document.getElementById('newTermExport').checked;
+
+  if(doExport) document.getElementById('exportBtn').click();
+
+  if(keepHeat) HubStore.setHeatCarry(HubStore.buildHeatCarry(session));
+  else HubStore.clearHeatCarry();
+
+  if(keepNames){
+    syncRosterFromSession();
+    localStorage.removeItem(ARCHIVE_KEY);
+    session = freshSessionKeepingNames();
+  } else {
+    localStorage.removeItem(ARCHIVE_KEY);
+    localStorage.removeItem('teach-notes-roster');
+    session = {
+      id: uid(),
+      date: new Date().toISOString().slice(0, 10),
+      subject: '',
+      lesson: '',
+      classNote: '',
+      students: Array.from({ length: DEFAULT_ROWS }, () => newStudent(''))
+    };
+  }
+
+  // Heat without names is useless — drop carry if names were cleared
+  if(!keepNames) HubStore.clearHeatCarry();
+
+  closeNewTermModal();
+  syncHeader();
+  render();
+  scheduleSave();
+  updateArchiveCount();
+  const kept = [keepNames && 'names', keepHeat && keepNames && 'heat'].filter(Boolean);
+  flashStatus(kept.length ? `New term — kept ${kept.join(' + ')}` : 'New term — cleared');
+}
+
+document.getElementById('newTermCancelBtn').onclick = closeNewTermModal;
+document.getElementById('newTermCancelX').onclick = closeNewTermModal;
+document.getElementById('newTermConfirmBtn').onclick = () => { confirmNewTerm(); };
+document.getElementById('newTermModal').addEventListener('click', e => {
+  if(e.target.id === 'newTermModal') closeNewTermModal();
+});
+document.getElementById('newTermKeepNames').addEventListener('change', e => {
+  if(!e.target.checked){
+    document.getElementById('newTermKeepHeat').checked = false;
+  }
+});
+document.getElementById('newTermKeepHeat').addEventListener('change', e => {
+  if(e.target.checked) document.getElementById('newTermKeepNames').checked = true;
+});
 
 document.getElementById('saveWorkBtn').onclick = () => { saveCurrentSessionWork(); };
 document.getElementById('reportBtn').onclick = openReportModal;

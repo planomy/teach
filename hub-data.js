@@ -183,6 +183,87 @@ const HubStore = (() => {
       }
     },
 
+    getHeatCarry() {
+      try {
+        const raw = localStorage.getItem('teach-notes-heat');
+        return raw ? JSON.parse(raw) : {};
+      } catch (e) {
+        return {};
+      }
+    },
+
+    setHeatCarry(map) {
+      if (!map || !Object.keys(map).length) {
+        localStorage.removeItem('teach-notes-heat');
+        return;
+      }
+      localStorage.setItem('teach-notes-heat', JSON.stringify(map));
+    },
+
+    clearHeatCarry() {
+      localStorage.removeItem('teach-notes-heat');
+    },
+
+    getHeatCarryFor(name) {
+      const key = (name || '').trim().toLowerCase();
+      if (!key) return null;
+      const row = this.getHeatCarry()[key];
+      if (!row || row.score == null) return null;
+      return {
+        score: row.score,
+        pct: row.pct != null ? row.pct : Math.round(row.score * 100),
+        label: row.label || (row.score >= 0.8 ? 'Great' : row.score >= 0.55 ? 'Good' : row.score >= 0.35 ? 'Okay' : row.score >= 0.2 ? 'Low' : 'Struggling'),
+        color: row.color || heatColor(row.score),
+        carried: true
+      };
+    },
+
+    /** Latest heat for a name from current session, then archive (newest first). */
+    latestHeatForName(name, session) {
+      const key = (name || '').trim().toLowerCase();
+      if (!key) return null;
+      const s = session || this.getNotesSession();
+      if (s?.students) {
+        const cur = s.students.find(st => (st.name || '').trim().toLowerCase() === key);
+        const h = this.studentHeat(cur);
+        if (h) return h;
+      }
+      for (const sess of this.getNotesArchive()) {
+        const st = (sess.students || []).find(x => (x.name || '').trim().toLowerCase() === key);
+        const h = this.studentHeat(st);
+        if (h) return h;
+      }
+      return this.getHeatCarryFor(name);
+    },
+
+    buildHeatCarry(session) {
+      const s = session || this.getNotesSession();
+      const map = {};
+      const names = new Set();
+      (s?.students || []).forEach(st => {
+        const n = (st.name || '').trim();
+        if (n) names.add(n);
+      });
+      this.getNotesArchive().forEach(sess => {
+        (sess.students || []).forEach(st => {
+          const n = (st.name || '').trim();
+          if (n) names.add(n);
+        });
+      });
+      names.forEach(name => {
+        const h = this.latestHeatForName(name, s);
+        if (!h) return;
+        map[name.toLowerCase()] = {
+          name,
+          score: h.score,
+          pct: h.pct,
+          label: h.label,
+          color: h.color
+        };
+      });
+      return map;
+    },
+
     classHeatSnapshot(session) {
       const s = session || this.getNotesSession();
       if (!s || !Array.isArray(s.students)) {
@@ -221,13 +302,22 @@ const HubStore = (() => {
           const parts = name.split(/\s+/).filter(Boolean);
           const first = parts[0] || '';
           const last = parts.length > 1 ? parts[parts.length - 1] : '';
+          const live = this.studentHeat(st);
+          const heat = live || this.getHeatCarryFor(name);
+          // Seed trajectory with carried heat when archive was cleared for a new term
+          if (heat?.carried) {
+            const key = name.toLowerCase();
+            if (!history.has(key) || !history.get(key).length) {
+              history.set(key, [heat.score]);
+            }
+          }
           return {
             id: st.id,
             name,
             first,
             last,
             base: first.slice(0, 2),
-            heat: this.studentHeat(st)
+            heat
           };
         });
 
