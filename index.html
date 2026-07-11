@@ -131,7 +131,7 @@
   .unit.monsters{--mark:#c45c4a}
 
   .hub-tools{
-    display:grid;grid-template-columns:1.3fr 0.9fr 0.9fr 0.9fr;gap:8px;
+    display:grid;grid-template-columns:1.3fr repeat(4, minmax(0, 0.675fr));gap:8px;
     flex-shrink:0;align-items:stretch;
   }
   .tool-card{
@@ -141,7 +141,8 @@
     border:1px solid var(--card-border);
     background:var(--card);
     box-shadow:var(--shadow);
-    min-height:220px;
+    min-width:0;
+    min-height:200px;
     transition:transform .22s cubic-bezier(.2,.8,.2,1), box-shadow .22s;
   }
   .tool-card:hover{transform:translateY(-1px);box-shadow:var(--shadow-hover)}
@@ -210,7 +211,15 @@
   .date-pick .cal-day{font-size:8px;font-weight:700;color:var(--accent)}
   .tool-check{width:13px;height:13px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
 
-  .tool-card.notes{justify-content:flex-start}
+  .tool-card.notes{
+    justify-content:flex-start;
+    background:var(--card);
+  }
+  .tool-card.notes.has-heat{
+    background:
+      radial-gradient(ellipse 100% 90% at 50% 30%, color-mix(in srgb, var(--heat-avg) 14%, transparent), transparent 65%),
+      var(--card);
+  }
   .tool-card.notes .desc{
     display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;
     font-size:12px;color:var(--ink-faint);line-height:1.45;margin-top:4px;
@@ -218,11 +227,14 @@
 
   .class-heat{
     flex:1;min-height:120px;position:relative;border-radius:12px;overflow:hidden;
-    background:
-      radial-gradient(ellipse 80% 70% at 50% 60%, color-mix(in srgb, var(--heat-avg, var(--accent)) 18%, transparent), transparent 70%),
-      var(--bg2);
+    background:var(--bg2);
     border:1px solid var(--line);
     display:flex;flex-direction:column;padding:8px 8px 6px;gap:6px;
+  }
+  .class-heat.has-heat{
+    background:
+      radial-gradient(ellipse 85% 75% at 50% 55%, color-mix(in srgb, var(--heat-avg) 42%, transparent), transparent 72%),
+      color-mix(in srgb, var(--heat-avg) 12%, var(--bg2));
   }
   .heat-meta{
     display:flex;align-items:baseline;justify-content:space-between;gap:8px;
@@ -397,6 +409,7 @@
   .hub-tools .tool-card:nth-child(2){animation-delay:.06s}
   .hub-tools .tool-card:nth-child(3){animation-delay:.1s}
   .hub-tools .tool-card:nth-child(4){animation-delay:.14s}
+  .hub-tools .tool-card:nth-child(5){animation-delay:.18s}
   .grid .unit:nth-child(1){animation-delay:.16s}
   .grid .unit:nth-child(2){animation-delay:.19s}
   .grid .unit:nth-child(3){animation-delay:.22s}
@@ -660,6 +673,21 @@
         <div class="tool-quick">
           <input id="dashRmText" placeholder="Add reminder…" aria-label="Reminder">
           <button type="button" id="dashRmAdd">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tool-card homework">
+      <div class="tool-head">
+        <strong>Homework</strong>
+        <a class="tool-expand" href="homework.html" title="Open all homework"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2h4v4M6 14H2v-4M14 2 9 7M2 14l5-5"/></svg></a>
+      </div>
+      <span class="desc">Set and tick off homework.</span>
+      <div class="tool-live">
+        <div class="tool-list" id="homeworkList"></div>
+        <div class="tool-quick">
+          <input id="dashHwText" placeholder="Add homework…" aria-label="Homework">
+          <button type="button" id="dashHwAdd">+</button>
         </div>
       </div>
     </div>
@@ -1226,17 +1254,41 @@ function renderDashReminders(){
   `).join('');
 }
 
+function renderDashHomework(){
+  const open = HubStore.getOpenHomework().slice(0, 5);
+  const el = document.getElementById('homeworkList');
+  if(!open.length){ el.innerHTML = '<div class="tool-empty">Nothing set — add below</div>'; return; }
+  el.innerHTML = open.map(r => `
+    <div class="row-item" data-id="${r.id}">
+      <input class="tool-check" type="checkbox" data-toggle aria-label="Mark done">
+      <span class="txt">${HubStore.esc(r.text)}</span>
+    </div>
+  `).join('');
+}
+
 function renderClassHeat(){
   const el = document.getElementById('classHeat');
   if(!el) return;
+  const card = el.closest('.tool-card.notes');
+  const setAvgColor = (color) => {
+    [el, card].forEach(node => {
+      if(!node) return;
+      if(color){
+        node.style.setProperty('--heat-avg', color);
+        node.classList.add('has-heat');
+      } else {
+        node.style.removeProperty('--heat-avg');
+        node.classList.remove('has-heat');
+      }
+    });
+  };
   const snap = HubStore.classHeatSnapshot();
   if(!snap.named){
-    el.style.removeProperty('--heat-avg');
+    setAvgColor(null);
     el.innerHTML = '<div class="heat-empty">Open notes and rate a few students — heat appears here</div>';
     return;
   }
-  if(snap.color) el.style.setProperty('--heat-avg', snap.color);
-  else el.style.removeProperty('--heat-avg');
+  setAvgColor(snap.color);
 
   const avgLabel = snap.avg == null ? '—' : `${Math.round(snap.avg * 100)}%`;
   const sub = snap.subject ? HubStore.esc(snap.subject) : 'Today';
@@ -1277,6 +1329,7 @@ function refreshDash(){
   renderDashEvents();
   renderDashMeetings();
   renderDashReminders();
+  renderDashHomework();
   renderClassHeat();
 }
 
@@ -1307,6 +1360,15 @@ document.getElementById('dashRmText').addEventListener('keydown', e => {
   if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('dashRmAdd').click(); }
 });
 
+document.getElementById('dashHwAdd').onclick = () => {
+  HubStore.addHomework(document.getElementById('dashHwText').value);
+  document.getElementById('dashHwText').value = '';
+  refreshDash();
+};
+document.getElementById('dashHwText').addEventListener('keydown', e => {
+  if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('dashHwAdd').click(); }
+});
+
 document.getElementById('eventsList').addEventListener('click', e => {
   if(e.target.dataset.del != null){
     HubStore.removeEvent(e.target.closest('[data-id]').dataset.id);
@@ -1322,6 +1384,12 @@ document.getElementById('meetingsList').addEventListener('click', e => {
 document.getElementById('remindersList').addEventListener('click', e => {
   if(e.target.dataset.toggle != null){
     HubStore.toggleReminder(e.target.closest('[data-id]').dataset.id);
+    refreshDash();
+  }
+});
+document.getElementById('homeworkList').addEventListener('click', e => {
+  if(e.target.dataset.toggle != null){
+    HubStore.toggleHomework(e.target.closest('[data-id]').dataset.id);
     refreshDash();
   }
 });

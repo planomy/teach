@@ -99,9 +99,23 @@
   tr td:last-child{border-radius:0 10px 10px 0}
   tr.focus td{background:rgba(255,255,255,.08);border-color:rgba(232,184,56,.35)}
   .num-cell{width:34px;text-align:center;color:var(--ink-faint);font-size:12px;font-weight:800;padding:6px 4px!important}
-  .name-cell{width:152px;max-width:152px}
+  .name-cell{width:168px;max-width:168px}
   .name-cell input{width:100%;min-width:0;background:transparent;border:none;color:var(--ink);font-weight:700;font-size:13px;padding:4px}
   .name-cell input:focus{outline:none;background:rgba(255,255,255,.05);border-radius:6px}
+  .name-row{display:flex;align-items:center;gap:6px}
+  .name-row input{flex:1;min-width:0}
+  .absent-btn{
+    flex-shrink:0;border:1px solid var(--line);background:transparent;color:var(--ink-faint);
+    font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
+    padding:4px 6px;border-radius:6px;cursor:pointer;line-height:1.2;
+  }
+  .absent-btn:hover{border-color:var(--gold);color:var(--gold2)}
+  .absent-btn.on{
+    background:rgba(240,152,136,.18);border-color:rgba(240,152,136,.45);color:#ffb0a0;
+  }
+  tr.absent-row td{opacity:.55}
+  tr.absent-row .rate{pointer-events:none;opacity:.45}
+  tr.absent-row .heat{opacity:.35}
   .heat-cell{width:44px;text-align:center;padding:6px 4px!important}
   .rate-cell{text-align:center}
   th.rate-cell{text-align:center}
@@ -161,6 +175,14 @@
 
   .table-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
   .row-count{font-size:13px;font-weight:800;color:var(--ink-dim)}
+  .quick-mark{
+    display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-left:auto;
+    font-size:12px;color:var(--ink-faint);
+  }
+  .quick-mark label{font-weight:700;letter-spacing:.02em}
+  .quick-mark select{
+    min-width:0;width:auto;padding:6px 8px;font-size:12px;font-weight:700;
+  }
 
   .shot-cell{
     display:flex;flex-wrap:wrap;gap:6px;align-items:center;width:auto;
@@ -339,19 +361,32 @@
     <textarea id="classNote" placeholder="General observations, tech issues, lesson pacing…"></textarea>
   </div>
 
-  <p class="hint" style="margin-bottom:10px">Tab through names and notes. <b>Heat</b> blends effort, participation and tasks — red struggling → blue great. Click a <b>Work</b> cell, then <b>⌘V / Ctrl+V</b> to paste. Gear menu: class list, reports, save work, import/export.</p>
+  <p class="hint" style="margin-bottom:10px">Tab through names and notes. Use <b>In / Abs</b> for attendance — absent students skip heat and reports. <b>Mark all</b> sets ratings for everyone present, then tweak individuals. Gear: class list, reports, save work, import/export, new term.</p>
 
   <div class="table-bar">
     <span class="row-count" id="rowCount">20 rows</span>
     <button class="btn" id="addRowBtn2" type="button">+ Add row</button>
     <button class="btn" id="removeRowBtn" type="button">− Remove row</button>
+    <div class="quick-mark" title="Applies to named students who are present">
+      <label for="markAllEffort">Mark all</label>
+      <select id="markAllEffort" aria-label="Set effort for whole class">
+        <option value="">Effort…</option>
+      </select>
+      <select id="markAllPart" aria-label="Set participation for whole class">
+        <option value="">Participation…</option>
+      </select>
+      <select id="markAllTask" aria-label="Set tasks for whole class">
+        <option value="">Tasks…</option>
+      </select>
+      <button class="btn good" id="markAllBtn" type="button">Apply</button>
+    </div>
   </div>
 
   <div style="overflow-x:auto">
   <table>
     <colgroup>
       <col style="width:34px">
-      <col style="width:152px">
+      <col style="width:168px">
       <col style="width:44px">
       <col style="width:84px">
       <col style="width:102px">
@@ -532,6 +567,7 @@ function snapshotSession(s){
         part: st.part || 0,
         task: st.task || 0,
         note: (st.note || '').trim(),
+        absent: !!st.absent,
         screenshots: (st.shots || []).length,
         shots
       };
@@ -639,7 +675,7 @@ function buildStudentReports(sessions, filters){
     if(filters.from && sess.date && sess.date < filters.from) continue;
     if(filters.to && sess.date && sess.date > filters.to) continue;
     for(const st of sess.students){
-      if(!st.name) continue;
+      if(!st.name || st.absent) continue;
       const key = st.name.toLowerCase();
       if(!byName.has(key)) byName.set(key, { name: st.name, entries: [] });
       byName.get(key).entries.push({
@@ -1017,6 +1053,10 @@ function loadSession(){
         s.students = Array.from({length: DEFAULT_ROWS}, () => newStudent());
       else
         while(s.students.length < DEFAULT_ROWS) s.students.push(newStudent());
+      s.students.forEach(st => {
+        if(typeof st.absent !== 'boolean') st.absent = false;
+        if(!Array.isArray(st.shots)) st.shots = [];
+      });
       return s;
     }
   }catch(e){}
@@ -1086,7 +1126,7 @@ function scheduleSave(){
 }
 
 function newStudent(name=''){
-  return { id: uid(), name, effort:0, part:0, task:0, note:'', shots:[] };
+  return { id: uid(), name, effort:0, part:0, task:0, note:'', shots:[], absent:false };
 }
 
 function syncHeader(){
@@ -1102,6 +1142,9 @@ function cycle(field, val, labels){
 }
 
 function heatHtml(st){
+  if(st.absent){
+    return `<span class="heat empty" title="Absent — not counted in heat" aria-label="Absent"></span>`;
+  }
   let h = HubStore.studentHeat(st);
   let carried = false;
   if(!h){
@@ -1125,14 +1168,19 @@ function render(){
   document.getElementById('rowCount').textContent = `${session.students.length} row${session.students.length===1?'':'s'}`;
   document.getElementById('removeRowBtn').disabled = session.students.length <= 1;
   tb.innerHTML = session.students.map((s, i) => `
-    <tr data-id="${s.id}">
+    <tr data-id="${s.id}" class="${s.absent ? 'absent-row' : ''}">
       <td class="num-cell">${i + 1}</td>
-      <td class="name-cell"><input value="${esc(s.name)}" placeholder="Student ${i + 1}" data-k="name"></td>
+      <td class="name-cell">
+        <div class="name-row">
+          <input value="${esc(s.name)}" placeholder="Student ${i + 1}" data-k="name">
+          <button type="button" class="absent-btn${s.absent ? ' on' : ''}" data-absent title="${s.absent ? 'Mark present' : 'Mark absent'}">${s.absent ? 'Abs' : 'In'}</button>
+        </div>
+      </td>
       <td class="heat-cell">${heatHtml(s)}</td>
-      <td class="rate-cell"><button type="button" class="rate effort" data-k="effort" data-v="${s.effort}">${EFFORT[s.effort]}</button></td>
-      <td class="rate-cell"><button type="button" class="rate part" data-k="part" data-v="${s.part}">${PART[s.part]}</button></td>
-      <td class="rate-cell"><button type="button" class="rate task" data-k="task" data-v="${s.task}">${TASK[s.task]}</button></td>
-      <td class="note-cell"><input value="${esc(s.note)}" placeholder="Quick note…" data-k="note"></td>
+      <td class="rate-cell"><button type="button" class="rate effort" data-k="effort" data-v="${s.effort}" ${s.absent ? 'disabled' : ''}>${EFFORT[s.effort]}</button></td>
+      <td class="rate-cell"><button type="button" class="rate part" data-k="part" data-v="${s.part}" ${s.absent ? 'disabled' : ''}>${PART[s.part]}</button></td>
+      <td class="rate-cell"><button type="button" class="rate task" data-k="task" data-v="${s.task}" ${s.absent ? 'disabled' : ''}>${TASK[s.task]}</button></td>
+      <td class="note-cell"><input value="${esc(s.note)}" placeholder="${s.absent ? 'Absent…' : 'Quick note…'}" data-k="note"></td>
       <td class="shot-cell paste-zone" tabindex="0" title="Click, then ⌘V / Ctrl+V to paste screenshot">
         ${s.shots.map((src,si)=>`<span class="thumb-wrap"><img class="thumb" src="${src}" alt="Work ${si+1}"><button type="button" data-rm="${si}" title="Remove">×</button></span>`).join('')}
         <span class="paste-hint">⌘V paste</span>
@@ -1198,6 +1246,7 @@ function addShot(studentId, dataUrl){
 }
 
 function cycleRate(s, k, rate){
+  if(s.absent) return;
   if(k === 'effort'){ s.effort = cycle('effort', s.effort, EFFORT); rate.dataset.v = s.effort; rate.textContent = EFFORT[s.effort]; }
   if(k === 'part'){ s.part = cycle('part', s.part, PART); rate.dataset.v = s.part; rate.textContent = PART[s.part]; }
   if(k === 'task'){ s.task = cycle('task', s.task, TASK); rate.dataset.v = s.task; rate.textContent = TASK[s.task]; }
@@ -1215,6 +1264,11 @@ document.getElementById('tbody').addEventListener('click', e => {
   if(e.target.dataset.del != null){
     session.students = session.students.filter(x => x.id !== id);
     syncRosterFromSession();
+    render(); scheduleSave(); return;
+  }
+  if(e.target.dataset.absent != null || e.target.closest('[data-absent]')){
+    s.absent = !s.absent;
+    if(s.absent){ s.effort = 0; s.part = 0; s.task = 0; }
     render(); scheduleSave(); return;
   }
   if(e.target.dataset.rm != null){
@@ -1345,6 +1399,39 @@ document.getElementById('addRowBtn').onclick = addRow;
 document.getElementById('addRowBtn2').onclick = addRow;
 document.getElementById('removeRowBtn').onclick = removeRow;
 
+(function fillMarkAllSelects(){
+  const fill = (id, labels) => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.innerHTML = `<option value="">${el.options[0]?.textContent || '…'}</option>` +
+      labels.map((label, i) => i === 0 ? '' : `<option value="${i}">${label}</option>`).join('');
+  };
+  fill('markAllEffort', EFFORT);
+  fill('markAllPart', PART);
+  fill('markAllTask', TASK);
+})();
+
+document.getElementById('markAllBtn').onclick = () => {
+  const effort = document.getElementById('markAllEffort').value;
+  const part = document.getElementById('markAllPart').value;
+  const task = document.getElementById('markAllTask').value;
+  if(effort === '' && part === '' && task === ''){
+    flashStatus('Pick at least one rating');
+    return;
+  }
+  let n = 0;
+  session.students.forEach(st => {
+    if(!(st.name || '').trim() || st.absent) return;
+    if(effort !== '') st.effort = +effort;
+    if(part !== '') st.part = +part;
+    if(task !== '') st.task = +task;
+    n++;
+  });
+  render();
+  scheduleSave();
+  flashStatus(n ? `Marked ${n} student${n===1?'':'s'}` : 'No present students to mark');
+};
+
 document.getElementById('newSessionBtn').onclick = async () => {
   if(sessionHasData(session) && !confirm('Archive this session and start a new one? Student names stay; ratings, notes and work clear from the table (work stays in archive / can be saved to your computer).')) return;
   const hadWork = session.students.some(st => st.shots?.length);
@@ -1468,6 +1555,7 @@ document.getElementById('exportBtn').onclick = () => {
       part: s.part || 0,
       task: s.task || 0,
       note: s.note || '',
+      absent: !!s.absent,
       shots: Array.isArray(s.shots) ? s.shots.slice() : []
     }))
   };
@@ -1511,6 +1599,7 @@ function normalizeOneSession(raw){
       part: labelIndex(PART, st.part ?? st.participation, 0),
       task: labelIndex(TASK, st.task ?? st.tasks, 0),
       note: st.note || '',
+      absent: !!st.absent,
       shots: shots.slice(-6)
     };
   });

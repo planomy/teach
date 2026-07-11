@@ -3,6 +3,7 @@ const HubStore = (() => {
     events: 'teach-events',
     meetings: 'teach-meetings',
     reminders: 'teach-reminders',
+    homework: 'teach-homework',
     timetable: 'teach-timetable'
   };
 
@@ -125,6 +126,30 @@ const HubStore = (() => {
       save('reminders', list);
     },
 
+    getHomework() { return load('homework'); },
+    getOpenHomework() { return load('homework').filter(r => !r.done); },
+    addHomework(text) {
+      const t = (text || '').trim();
+      if (!t) return null;
+      const list = load('homework');
+      const item = { id: uid(), text: t, done: false, created: today() };
+      list.unshift(item);
+      save('homework', list);
+      return item;
+    },
+    toggleHomework(id) {
+      const list = load('homework');
+      const item = list.find(x => x.id === id);
+      if (!item) return null;
+      item.done = !item.done;
+      save('homework', list);
+      return item;
+    },
+    removeHomework(id) {
+      const list = load('homework').filter(x => x.id !== id);
+      save('homework', list);
+    },
+
     getTimetable(fallback) {
       try {
         const raw = localStorage.getItem(KEYS.timetable);
@@ -143,9 +168,9 @@ const HubStore = (() => {
       localStorage.removeItem(KEYS.timetable);
     },
 
-    /** Composite 0–1 from effort / participation / tasks. null if nothing rated. */
+    /** Composite 0–1 from effort / participation / tasks. null if nothing rated or absent. */
     studentHeat(st) {
-      if (!st) return null;
+      if (!st || st.absent) return null;
       const parts = [];
       const effort = +st.effort || 0;
       const part = +st.part || 0;
@@ -276,7 +301,7 @@ const HubStore = (() => {
       archive.forEach(sess => {
         (sess.students || []).forEach(st => {
           const name = (st.name || '').trim();
-          if (!name) return;
+          if (!name || st.absent) return;
           const heat = this.studentHeat(st);
           if (!heat) return;
           const key = name.toLowerCase();
@@ -287,7 +312,7 @@ const HubStore = (() => {
       // Current session last
       (s.students || []).forEach(st => {
         const name = (st.name || '').trim();
-        if (!name) return;
+        if (!name || st.absent) return;
         const heat = this.studentHeat(st);
         if (!heat) return;
         const key = name.toLowerCase();
@@ -296,7 +321,7 @@ const HubStore = (() => {
       });
 
       const named = s.students
-        .filter(st => (st.name || '').trim())
+        .filter(st => (st.name || '').trim() && !st.absent)
         .map(st => {
           const name = (st.name || '').trim();
           const parts = name.split(/\s+/).filter(Boolean);
@@ -422,6 +447,6 @@ const HubStore = (() => {
     }
     const u = (t - a.t) / (b.t - a.t || 1);
     const rgb = a.c.map((v, i) => Math.round(v + (b.c[i] - v) * u));
-    return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+    return '#' + rgb.map(n => n.toString(16).padStart(2, '0')).join('');
   }
 })();
