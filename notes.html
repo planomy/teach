@@ -26,6 +26,32 @@
   }
   .top h1{font-size:18px;font-weight:800;margin-right:auto}
   .top h1 a{text-decoration:none;color:inherit}
+  .top-end{display:flex;align-items:center;gap:8px;margin-left:auto}
+  .top .theme-toggle{margin-left:0}
+  .gear-wrap{position:relative}
+  .gear-btn{
+    width:40px;height:40px;border-radius:12px;border:1px solid var(--line);
+    background:var(--bg2);color:var(--ink);cursor:pointer;padding:0;
+    display:inline-flex;align-items:center;justify-content:center;
+    transition:border-color .15s,background .15s,transform .15s;
+  }
+  .gear-btn:hover{border-color:var(--gold);transform:translateY(-1px)}
+  .gear-btn[aria-expanded="true"]{border-color:var(--gold);background:rgba(232,184,56,.12)}
+  .gear-btn svg{width:18px;height:18px;display:block}
+  .gear-menu{
+    position:absolute;top:calc(100% + 6px);right:0;min-width:200px;
+    padding:6px;border-radius:12px;border:1px solid rgba(255,255,255,.1);
+    background:var(--bg1);box-shadow:0 16px 40px rgba(0,0,0,.45);
+    display:none;z-index:30;
+  }
+  .gear-menu.open{display:block}
+  .gear-menu button{
+    width:100%;text-align:left;border:none;background:transparent;color:var(--ink);
+    font:inherit;font-size:13px;font-weight:600;padding:10px 12px;border-radius:8px;
+    cursor:pointer;
+  }
+  .gear-menu button:hover{background:rgba(255,255,255,.06)}
+  .gear-menu button:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
   .pill{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
     padding:4px 10px;border-radius:999px;background:rgba(126,217,154,.15);color:var(--good);border:1px solid rgba(126,217,154,.3)}
   .pill.saving{color:var(--warn);border-color:rgba(255,224,102,.35);background:rgba(255,224,102,.12)}
@@ -168,6 +194,16 @@
   .stat{font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.06);color:var(--ink-dim)}
   .report-notes{font-size:13px;color:var(--ink-dim);margin-bottom:10px;line-height:1.5}
   .report-notes li{margin-left:18px;margin-bottom:4px}
+  .report-work{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+  .report-work figure{margin:0;width:72px}
+  .report-work img{
+    width:72px;height:72px;object-fit:cover;border-radius:8px;
+    border:1px solid var(--line);cursor:pointer;display:block;background:var(--bg2);
+  }
+  .report-work figcaption{
+    font-size:9px;color:var(--ink-faint);margin-top:3px;line-height:1.2;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
   .report-draft label{font-size:11px;font-weight:700;color:var(--gold2);display:block;margin-bottom:4px}
   .report-draft textarea{
     width:100%;min-height:72px;font-size:13px;line-height:1.5;resize:vertical;margin-bottom:8px;
@@ -198,11 +234,25 @@
     </select>
   </div>
   <div class="field wide"><label for="lesson">Lesson / focus</label><input id="lesson" placeholder="e.g. L1A · Is an empty glass empty?"></div>
-  <button class="btn" id="rosterBtn" type="button">Class list</button>
-  <button class="btn good" id="reportBtn" type="button">Report cards</button>
-  <button class="btn" id="exportBtn" type="button">Export</button>
-  <button class="btn primary" id="newSessionBtn" type="button">New session</button>
-  <button class="theme-toggle" type="button"></button>
+  <div class="top-end">
+    <button class="btn primary" id="newSessionBtn" type="button">New session</button>
+    <button class="theme-toggle" type="button"></button>
+    <div class="gear-wrap">
+      <button class="gear-btn" id="gearBtn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="gearMenu" title="More tools" aria-label="More tools">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/>
+          <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9c.3.6.9 1 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>
+        </svg>
+      </button>
+      <div class="gear-menu" id="gearMenu" role="menu" hidden>
+        <button type="button" role="menuitem" id="rosterBtn">Class list</button>
+        <button type="button" role="menuitem" id="reportBtn">Report cards</button>
+        <button type="button" role="menuitem" id="saveWorkBtn">Save work…</button>
+        <button type="button" role="menuitem" id="importBtn">Import</button>
+        <button type="button" role="menuitem" id="exportBtn">Export</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="wrap">
@@ -221,7 +271,7 @@
     <textarea id="classNote" placeholder="General observations, tech issues, lesson pacing…"></textarea>
   </div>
 
-  <p class="hint" style="margin-bottom:10px">Tab through names and notes. Click a <b>Work</b> cell, then <b>⌘V / Ctrl+V</b> to paste a screenshot — it appears as a thumbnail. Click thumbnail to enlarge.</p>
+  <p class="hint" style="margin-bottom:10px">Tab through names and notes. Click a <b>Work</b> cell, then <b>⌘V / Ctrl+V</b> to paste — thumbnail appears. Click to enlarge. Use the <b>gear</b> menu for class list, report cards, save work, import and export.</p>
 
   <div class="table-bar">
     <span class="row-count" id="rowCount">20 rows</span>
@@ -258,7 +308,7 @@
   </div>
 
   <footer>
-    <p>Data stays in your browser (localStorage). Sessions archive when you start a new one. <span id="archiveCount"></span></p>
+    <p>Browser keeps a compact archive for review. Use <b>Save work…</b> to put full images in a folder on this computer (plenty of space). <span id="archiveCount"></span></p>
     <p><a href="https://github.com/planomy/teach">planomy/teach</a></p>
   </footer>
 </div>
@@ -269,6 +319,7 @@
       <h2>Report card summaries</h2>
       <button class="btn" id="exportReportCsv" type="button">Download CSV</button>
       <button class="btn" id="exportReportTxt" type="button">Download text</button>
+      <button class="btn good" id="saveReportWorkBtn" type="button" title="Save filtered student work to a folder">Save work…</button>
       <button class="btn" id="closeReportBtn" type="button">Close</button>
     </div>
     <div class="modal-filters">
@@ -292,6 +343,7 @@
 
 <div class="lightbox" id="lightbox"><button class="close" type="button" aria-label="Close">✕</button><img alt="Student work"></div>
 <input type="file" id="filePick" accept="image/*" hidden>
+<input type="file" id="importPick" accept="application/json,.json" hidden>
 
 <script>
 const EFFORT = ['—','1 Low','2','3 OK','4','5 High'];
@@ -324,8 +376,29 @@ function loadArchive(){
 }
 
 function saveArchive(list){
-  localStorage.setItem(ARCHIVE_KEY, JSON.stringify(list));
+  try{
+    localStorage.setItem(ARCHIVE_KEY, JSON.stringify(list));
+    return true;
+  }catch(e){
+    try{
+      const slim = list.map(s => ({
+        ...s,
+        students: (s.students || []).map(st => {
+          const shots = st.shots || [];
+          return { ...st, screenshots: shots.length || st.screenshots || 0, shots: [] };
+        })
+      }));
+      localStorage.setItem(ARCHIVE_KEY, JSON.stringify(slim));
+      flashStatus('Archive full — images not kept in browser. Use Save work…');
+      return false;
+    }catch(e2){
+      flashStatus('Could not archive — storage full');
+      return false;
+    }
+  }
 }
+
+const MAX_ARCHIVED_SHOTS = 4;
 
 function sessionHasData(s){
   if((s.classNote || '').trim()) return true;
@@ -340,14 +413,18 @@ function snapshotSession(s){
     lesson: s.lesson || '',
     classNote: s.classNote || '',
     archived: new Date().toISOString(),
-    students: s.students.map(st => ({
-      name: (st.name || '').trim(),
-      effort: st.effort || 0,
-      part: st.part || 0,
-      task: st.task || 0,
-      note: (st.note || '').trim(),
-      screenshots: st.shots?.length || 0
-    }))
+    students: s.students.map(st => {
+      const shots = (st.shots || []).slice(-MAX_ARCHIVED_SHOTS);
+      return {
+        name: (st.name || '').trim(),
+        effort: st.effort || 0,
+        part: st.part || 0,
+        task: st.task || 0,
+        note: (st.note || '').trim(),
+        screenshots: (st.shots || []).length,
+        shots
+      };
+    })
   };
 }
 
@@ -461,7 +538,8 @@ function buildStudentReports(sessions, filters){
         effort: st.effort,
         part: st.part,
         task: st.task,
-        note: st.note
+        note: st.note,
+        shots: Array.isArray(st.shots) ? st.shots : []
       });
     }
   }
@@ -477,6 +555,19 @@ function buildStudentReports(sessions, filters){
       lesson: e.lesson,
       note: e.note
     }));
+    const work = [];
+    entries.forEach(e => {
+      (e.shots || []).forEach((src, si) => {
+        work.push({
+          src,
+          date: e.date,
+          lesson: e.lesson,
+          subject: e.subject,
+          label: `${formatShortDate(e.date)}${e.lesson ? ' · ' + e.lesson : ''}`,
+          index: si + 1
+        });
+      });
+    });
     const stats = {
       lessons: entries.length,
       effortAvg: avgRated(efforts),
@@ -485,13 +576,15 @@ function buildStudentReports(sessions, filters){
       partMode: modeValue(parts),
       taskDone: tasks.filter(t => t === 1).length,
       taskPartial: tasks.filter(t => t === 2).length,
-      taskTotal: tasks.filter(t => t > 0).length
+      taskTotal: tasks.filter(t => t > 0).length,
+      workCount: work.length
     };
     return {
       name: row.name,
       subject: subjectLabel,
       stats,
       notes,
+      work,
       draft: buildDraftComment(row.name, subjectLabel, stats, notes)
     };
   });
@@ -528,15 +621,23 @@ function renderReportCards(){
     const notesHtml = r.notes.length
       ? `<ul class="report-notes">${r.notes.map(n => `<li><b>${formatShortDate(n.date)}</b>${n.lesson ? ' · ' + esc(n.lesson) : ''}: ${esc(n.note)}</li>`).join('')}</ul>`
       : '<p class="report-notes">No written notes recorded.</p>';
+    const workHtml = r.work?.length
+      ? `<div class="report-work">${r.work.map(w => `
+          <figure>
+            <img class="thumb report-thumb" src="${w.src}" alt="Work by ${esc(r.name)}" data-full="${w.src}">
+            <figcaption title="${esc(w.label)}">${esc(w.label)}</figcaption>
+          </figure>`).join('')}</div>`
+      : '';
     return `
       <div class="report-card" data-idx="${i}">
         <h3>${esc(r.name)}</h3>
-        <div class="report-meta">${esc(r.subject)} · ${s.lessons} lesson${s.lessons===1?'':'s'} recorded</div>
+        <div class="report-meta">${esc(r.subject)} · ${s.lessons} lesson${s.lessons===1?'':'s'} recorded${s.workCount ? ` · ${s.workCount} work item${s.workCount===1?'':'s'}` : ''}</div>
         <div class="report-stats">
           <span class="stat">${effortLabel}</span>
           <span class="stat">${partLabel}</span>
           <span class="stat">${taskLabel}</span>
         </div>
+        ${workHtml}
         ${notesHtml}
         <div class="report-draft">
           <label for="draft-${i}">Draft report comment</label>
@@ -559,6 +660,172 @@ function downloadText(filename, text, type = 'text/plain'){
   a.download = filename;
   a.click();
   URL.revokeObjectURL(a.href);
+}
+
+function safeFilePart(s){
+  return String(s || 'untitled').replace(/[^\w\-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || 'untitled';
+}
+
+function dataUrlToBlob(dataUrl){
+  const [meta, b64] = String(dataUrl).split(',');
+  const mime = (meta.match(/data:([^;]+)/) || [])[1] || 'image/jpeg';
+  const bin = atob(b64 || '');
+  const bytes = new Uint8Array(bin.length);
+  for(let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+}
+
+function collectWorkFromSession(sess){
+  const files = [];
+  const date = sess.date || 'undated';
+  const subject = sess.subject || 'subject';
+  const lesson = sess.lesson || '';
+  (sess.students || []).forEach(st => {
+    const name = (st.name || '').trim() || 'unnamed';
+    (st.shots || []).forEach((src, i) => {
+      const ext = (src.match(/^data:image\/(\w+)/) || [])[1] === 'png' ? 'png' : 'jpg';
+      files.push({
+        student: name,
+        filename: `${safeFilePart(name)}-${i + 1}.${ext}`,
+        pathParts: [safeFilePart(date), safeFilePart(subject), ...(lesson ? [safeFilePart(lesson)] : []), safeFilePart(name)],
+        blob: dataUrlToBlob(src),
+        src
+      });
+    });
+  });
+  return files;
+}
+
+function collectWorkFromReports(rows){
+  const files = [];
+  rows.forEach(r => {
+    (r.work || []).forEach((w, i) => {
+      const ext = (w.src.match(/^data:image\/(\w+)/) || [])[1] === 'png' ? 'png' : 'jpg';
+      const date = w.date || 'undated';
+      files.push({
+        student: r.name,
+        filename: `${safeFilePart(r.name)}-${safeFilePart(date)}-${i + 1}.${ext}`,
+        pathParts: [safeFilePart(r.name), safeFilePart(date)],
+        blob: dataUrlToBlob(w.src),
+        src: w.src
+      });
+    });
+  });
+  return files;
+}
+
+function crc32(buf){
+  let c = ~0;
+  for(let i = 0; i < buf.length; i++){
+    c ^= buf[i];
+    for(let k = 0; k < 8; k++) c = (c >>> 1) ^ (0xedb88320 & -(c & 1));
+  }
+  return ~c >>> 0;
+}
+
+function u16(n){ const b = new Uint8Array(2); new DataView(b.buffer).setUint16(0, n, true); return b; }
+function u32(n){ const b = new Uint8Array(4); new DataView(b.buffer).setUint32(0, n, true); return b; }
+
+function buildStoreZip(files){
+  const enc = new TextEncoder();
+  const locals = [];
+  const centrals = [];
+  let offset = 0;
+  files.forEach(f => {
+    const name = enc.encode(f.zipPath);
+    const data = new Uint8Array(f.bytes);
+    const crc = crc32(data);
+    const local = new Uint8Array(30 + name.length + data.length);
+    local.set([0x50,0x4b,0x03,0x04, 0x14,0x00, 0x00,0x00, 0x00,0x00, 0x00,0x00,0x00,0x00], 0);
+    local.set(u32(crc), 14);
+    local.set(u32(data.length), 18);
+    local.set(u32(data.length), 22);
+    local.set(u16(name.length), 26);
+    local.set(u16(0), 28);
+    local.set(name, 30);
+    local.set(data, 30 + name.length);
+    locals.push(local);
+
+    const central = new Uint8Array(46 + name.length);
+    central.set([0x50,0x4b,0x01,0x02, 0x14,0x00, 0x14,0x00, 0x00,0x00, 0x00,0x00, 0x00,0x00,0x00,0x00], 0);
+    central.set(u32(crc), 16);
+    central.set(u32(data.length), 20);
+    central.set(u32(data.length), 24);
+    central.set(u16(name.length), 28);
+    central.set(u16(0), 30);
+    central.set(u16(0), 32);
+    central.set(u16(0), 34);
+    central.set(u16(0), 36);
+    central.set(u32(0), 38);
+    central.set(u32(offset), 42);
+    central.set(name, 46);
+    centrals.push(central);
+    offset += local.length;
+  });
+  const centralSize = centrals.reduce((n, c) => n + c.length, 0);
+  const end = new Uint8Array(22);
+  end.set([0x50,0x4b,0x05,0x06, 0x00,0x00, 0x00,0x00], 0);
+  end.set(u16(files.length), 8);
+  end.set(u16(files.length), 10);
+  end.set(u32(centralSize), 12);
+  end.set(u32(offset), 16);
+  end.set(u16(0), 20);
+  return new Blob([...locals, ...centrals, end], { type: 'application/zip' });
+}
+
+async function writeWorkToDirectory(dirHandle, files){
+  for(const f of files){
+    let folder = dirHandle;
+    for(const part of f.pathParts){
+      folder = await folder.getDirectoryHandle(part, { create: true });
+    }
+    const fh = await folder.getFileHandle(f.filename, { create: true });
+    const writable = await fh.createWritable();
+    await writable.write(f.blob);
+    await writable.close();
+  }
+}
+
+async function saveWorkFiles(files, zipName){
+  if(!files.length){
+    flashStatus('No pasted work to save');
+    return false;
+  }
+  if(window.showDirectoryPicker){
+    try{
+      const dir = await showDirectoryPicker({ mode: 'readwrite' });
+      await writeWorkToDirectory(dir, files);
+      flashStatus(`Saved ${files.length} file${files.length===1?'':'s'} to folder`);
+      return true;
+    }catch(e){
+      if(e.name === 'AbortError') return false;
+    }
+  }
+  const zipFiles = [];
+  for(const f of files){
+    const bytes = new Uint8Array(await f.blob.arrayBuffer());
+    zipFiles.push({ zipPath: [...f.pathParts, f.filename].join('/'), bytes });
+  }
+  const zip = buildStoreZip(zipFiles);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(zip);
+  a.download = zipName || 'student-work.zip';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  flashStatus(`Downloaded ${files.length} file${files.length===1?'':'s'} as zip`);
+  return true;
+}
+
+async function saveCurrentSessionWork(){
+  flushSave();
+  const files = collectWorkFromSession(session);
+  const label = safeFilePart([session.date, session.subject, session.lesson].filter(Boolean).join('-') || 'session');
+  return saveWorkFiles(files, `work-${label}.zip`);
+}
+
+async function saveReportWork(){
+  const files = collectWorkFromReports(reportData || []);
+  return saveWorkFiles(files, 'report-work.zip');
 }
 
 function getDraftText(i){
@@ -665,6 +932,30 @@ function applyRosterToTable(save = true){
 
 function saveRoster(text){
   localStorage.setItem('teach-notes-roster', text);
+}
+
+function syncRosterFromSession(){
+  const names = session.students.map(st => (st.name || '').trim());
+  let last = -1;
+  names.forEach((n, i) => { if(n) last = i; });
+  const text = last < 0 ? '' : names.slice(0, last + 1).join('\n');
+  const el = document.getElementById('rosterText');
+  if(el) el.value = text;
+  saveRoster(text);
+}
+
+function freshSessionKeepingNames(){
+  const prev = session;
+  const names = (prev.students || []).map(st => (st.name || '').trim());
+  const count = Math.max(DEFAULT_ROWS, prev.students?.length || 0, names.filter(Boolean).length);
+  return {
+    id: uid(),
+    date: new Date().toISOString().slice(0, 10),
+    subject: prev.subject || '',
+    lesson: '',
+    classNote: '',
+    students: Array.from({ length: count }, (_, i) => newStudent(names[i] || ''))
+  };
 }
 
 function scheduleSave(){
@@ -791,6 +1082,7 @@ document.getElementById('tbody').addEventListener('click', e => {
 
   if(e.target.dataset.del != null){
     session.students = session.students.filter(x => x.id !== id);
+    syncRosterFromSession();
     render(); scheduleSave(); return;
   }
   if(e.target.dataset.rm != null){
@@ -833,7 +1125,11 @@ document.getElementById('tbody').addEventListener('input', e => {
   const s = findStudent(tr.dataset.id);
   if(!s) return;
   const k = e.target.dataset.k;
-  if(k === 'name') s.name = e.target.value;
+  if(k === 'name'){
+    s.name = e.target.value;
+    clearTimeout(rosterTimer);
+    rosterTimer = setTimeout(syncRosterFromSession, 400);
+  }
   if(k === 'note') s.note = e.target.value;
   scheduleSave();
 });
@@ -849,6 +1145,37 @@ document.getElementById('tbody').addEventListener('focusin', e => {
 ['sessionDate','subject','lesson','classNote'].forEach(id => {
   document.getElementById(id).addEventListener('input', scheduleSave);
   document.getElementById(id).addEventListener('change', scheduleSave);
+});
+
+function closeGearMenu(){
+  const btn = document.getElementById('gearBtn');
+  const menu = document.getElementById('gearMenu');
+  if(!btn || !menu) return;
+  menu.classList.remove('open');
+  menu.hidden = true;
+  btn.setAttribute('aria-expanded', 'false');
+}
+
+function toggleGearMenu(){
+  const btn = document.getElementById('gearBtn');
+  const menu = document.getElementById('gearMenu');
+  const open = menu.classList.toggle('open');
+  menu.hidden = !open;
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+
+document.getElementById('gearBtn').addEventListener('click', e => {
+  e.stopPropagation();
+  toggleGearMenu();
+});
+document.getElementById('gearMenu').addEventListener('click', e => {
+  if(e.target.closest('[role="menuitem"]')) closeGearMenu();
+});
+document.addEventListener('click', e => {
+  if(!e.target.closest('.gear-wrap')) closeGearMenu();
+});
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape') closeGearMenu();
 });
 
 document.getElementById('rosterBtn').onclick = () => {
@@ -883,22 +1210,36 @@ document.getElementById('addRowBtn').onclick = addRow;
 document.getElementById('addRowBtn2').onclick = addRow;
 document.getElementById('removeRowBtn').onclick = removeRow;
 
-document.getElementById('newSessionBtn').onclick = () => {
-  if(sessionHasData(session) && !confirm('Archive this session and start fresh? Your notes will be saved for report cards.')) return;
+document.getElementById('newSessionBtn').onclick = async () => {
+  if(sessionHasData(session) && !confirm('Archive this session and start a new one? Student names stay; ratings, notes and work clear from the table (work stays in archive / can be saved to your computer).')) return;
+  const hadWork = session.students.some(st => st.shots?.length);
+  if(hadWork){
+    const saveFirst = confirm('Save pasted work to a folder on this computer before starting the new session?\n\n(Chrome/Edge: pick a folder. Other browsers: downloads a zip.)');
+    if(saveFirst) await saveCurrentSessionWork();
+  }
   archiveCurrentSession();
-  session = defaultSession();
+  syncRosterFromSession();
+  session = freshSessionKeepingNames();
   syncHeader(); render(); scheduleSave();
 };
 
+document.getElementById('saveWorkBtn').onclick = () => { saveCurrentSessionWork(); };
 document.getElementById('reportBtn').onclick = openReportModal;
 document.getElementById('closeReportBtn').onclick = () => document.getElementById('reportModal').classList.remove('open');
 document.getElementById('refreshReportBtn').onclick = renderReportCards;
 document.getElementById('exportReportCsv').onclick = exportReportCsv;
 document.getElementById('exportReportTxt').onclick = exportReportTxt;
+document.getElementById('saveReportWorkBtn').onclick = () => { saveReportWork(); };
 document.getElementById('reportModal').addEventListener('click', e => {
   if(e.target.id === 'reportModal') document.getElementById('reportModal').classList.remove('open');
 });
 document.getElementById('reportList').addEventListener('click', e => {
+  const thumb = e.target.closest('.report-thumb');
+  if(thumb){
+    document.querySelector('#lightbox img').src = thumb.dataset.full || thumb.src;
+    document.getElementById('lightbox').classList.add('open');
+    return;
+  }
   if(e.target.classList.contains('copy-draft')){
     const i = +e.target.dataset.idx;
     const text = getDraftText(i);
@@ -910,37 +1251,149 @@ document.getElementById('reportList').addEventListener('click', e => {
 });
 
 document.getElementById('exportBtn').onclick = () => {
-  scheduleSave();
+  flushSave();
   const payload = {
+    type: 'teach-notes-session',
+    version: 1,
     exported: new Date().toISOString(),
-    ...session,
+    id: session.id,
+    date: session.date,
+    subject: session.subject,
+    lesson: session.lesson,
+    classNote: session.classNote,
     students: session.students.map(s => ({
-      name: s.name,
-      effort: EFFORT[s.effort],
-      participation: PART[s.part],
-      tasks: TASK[s.task],
-      note: s.note,
-      screenshots: s.shots.length
+      name: s.name || '',
+      effort: s.effort || 0,
+      part: s.part || 0,
+      task: s.task || 0,
+      note: s.note || '',
+      shots: Array.isArray(s.shots) ? s.shots.slice() : []
     }))
   };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
-  const a = document.createElement('a');
   const label = [session.date, session.subject, session.lesson].filter(Boolean).join(' · ') || 'session';
-  a.href = URL.createObjectURL(blob);
-  a.download = `teach-notes-${label.replace(/[^\w\-]+/g,'-')}.json`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-
-  const withImages = session.students.some(s => s.shots.length);
-  if(withImages){
-    const full = new Blob([JSON.stringify({...session, exported: new Date().toISOString()}, null, 2)], {type:'application/json'});
-    const b = document.createElement('a');
-    b.href = URL.createObjectURL(full);
-    b.download = `teach-notes-full-${label.replace(/[^\w\-]+/g,'-')}.json`;
-    b.click();
-    URL.revokeObjectURL(b.href);
-  }
+  downloadText(
+    `teach-notes-${label.replace(/[^\w\-]+/g,'-')}.json`,
+    JSON.stringify(payload, null, 2),
+    'application/json'
+  );
+  const n = payload.students.reduce((sum, s) => sum + s.shots.length, 0);
+  flashStatus(n ? `Exported session + ${n} work item${n===1?'':'s'}` : 'Exported session');
 };
+
+function labelIndex(list, value, fallback = 0){
+  if(typeof value === 'number' && value >= 0 && value < list.length) return value;
+  const i = list.indexOf(value);
+  return i >= 0 ? i : fallback;
+}
+
+function normalizeImportedSession(raw){
+  if(!raw || typeof raw !== 'object') throw new Error('Not a notes file');
+  // Full archive dump: { sessions: [...] } or bare array
+  if(Array.isArray(raw)) return { kind: 'archive', sessions: raw.map(normalizeOneSession) };
+  if(Array.isArray(raw.sessions)) return { kind: 'archive', sessions: raw.sessions.map(normalizeOneSession) };
+  if(raw.type === 'teach-notes-archive' && Array.isArray(raw.sessions))
+    return { kind: 'archive', sessions: raw.sessions.map(normalizeOneSession) };
+  return { kind: 'session', session: normalizeOneSession(raw) };
+}
+
+function normalizeOneSession(raw){
+  if(!raw || typeof raw !== 'object') throw new Error('Invalid session');
+  const studentsIn = Array.isArray(raw.students) ? raw.students : [];
+  const students = studentsIn.map(st => {
+    const shots = Array.isArray(st.shots)
+      ? st.shots.filter(s => typeof s === 'string' && s.startsWith('data:image'))
+      : [];
+    return {
+      id: uid(),
+      name: st.name || '',
+      effort: labelIndex(EFFORT, st.effort ?? st.Effort, 0),
+      part: labelIndex(PART, st.part ?? st.participation, 0),
+      task: labelIndex(TASK, st.task ?? st.tasks, 0),
+      note: st.note || '',
+      shots: shots.slice(-6)
+    };
+  });
+  while(students.length < DEFAULT_ROWS) students.push(newStudent(''));
+  return {
+    id: raw.id || uid(),
+    date: raw.date || new Date().toISOString().slice(0, 10),
+    subject: raw.subject || '',
+    lesson: raw.lesson || '',
+    classNote: raw.classNote || '',
+    students
+  };
+}
+
+function applyImportedSession(imported){
+  session = imported;
+  syncRosterFromSession();
+  syncHeader();
+  render();
+  scheduleSave();
+}
+
+function mergeImportedIntoArchive(sessions){
+  const archive = loadArchive();
+  let added = 0;
+  sessions.forEach(s => {
+    const snap = snapshotSession(s);
+    const i = archive.findIndex(a => a.id === snap.id);
+    if(i >= 0) archive[i] = snap;
+    else { archive.unshift(snap); added++; }
+  });
+  while(archive.length > 300) archive.pop();
+  saveArchive(archive);
+  updateArchiveCount();
+  return added;
+}
+
+async function handleImportFile(file){
+  const text = await file.text();
+  let raw;
+  try{ raw = JSON.parse(text); }
+  catch(e){ throw new Error('File is not valid JSON'); }
+  const normalized = normalizeImportedSession(raw);
+
+  if(normalized.kind === 'archive'){
+    const n = normalized.sessions.length;
+    if(!confirm(`Import ${n} archived lesson${n===1?'':'s'} into this browser’s archive?`)) return;
+    mergeImportedIntoArchive(normalized.sessions);
+    flashStatus(`Imported ${n} lesson${n===1?'':'s'} into archive`);
+    return;
+  }
+
+  const s = normalized.session;
+  const workCount = s.students.reduce((sum, st) => sum + (st.shots?.length || 0), 0);
+  const label = [s.date, s.subject, s.lesson].filter(Boolean).join(' · ') || 'session';
+  const openIt = confirm(
+    `Import “${label}”${workCount ? ` with ${workCount} work item${workCount===1?'':'s'}` : ''}.\n\nOK — open it in the table now (also adds to archive)\nCancel — add to archive only (keep current table)`
+  );
+
+  if(openIt){
+    if(sessionHasData(session)){
+      const archiveFirst = confirm('Archive your current session before replacing the table?');
+      if(archiveFirst) archiveCurrentSession();
+    }
+    applyImportedSession(s);
+    mergeImportedIntoArchive([s]);
+    flashStatus('Imported and opened');
+  } else {
+    mergeImportedIntoArchive([s]);
+    flashStatus('Imported into archive');
+  }
+}
+
+document.getElementById('importBtn').onclick = () => document.getElementById('importPick').click();
+document.getElementById('importPick').addEventListener('change', async e => {
+  const file = e.target.files?.[0];
+  e.target.value = '';
+  if(!file) return;
+  try{
+    await handleImportFile(file);
+  }catch(err){
+    alert(err.message || 'Could not import file');
+  }
+});
 
 document.getElementById('filePick').addEventListener('change', async e => {
   const file = e.target.files[0];
@@ -993,6 +1446,9 @@ if(params.get('lesson')) session.lesson = params.get('lesson');
 
 syncHeader();
 applyRosterToTable(false);
+if(!parseRoster(document.getElementById('rosterText').value).length){
+  syncRosterFromSession();
+}
 render();
 updateArchiveCount();
 </script>
