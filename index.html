@@ -129,6 +129,28 @@
   .unit.reading{--mark:#c67a3a}
   .unit.engage{--mark:#3d9b8f}
   .unit.monsters{--mark:#c45c4a}
+  .unit.apps::before{display:none}
+  .unit.apps .subj{padding-left:0}
+  .unit.apps .meta{margin-bottom:2px}
+  .app-dots{
+    display:flex;flex-wrap:wrap;gap:7px;align-items:center;
+    margin-top:auto;padding-top:4px;
+  }
+  .app-dot{
+    width:34px;height:34px;border-radius:50%;
+    display:grid;place-items:center;
+    font-size:9px;font-weight:700;letter-spacing:-.03em;
+    text-decoration:none;color:#fff;line-height:1;
+    background:var(--c, var(--accent));
+    box-shadow:0 0 0 3px color-mix(in srgb, var(--c, var(--accent)) 22%, transparent);
+    transition:transform .15s, box-shadow .15s, filter .15s;
+  }
+  .app-dot:hover{
+    transform:scale(1.08);
+    filter:brightness(1.08);
+    box-shadow:0 0 0 3px color-mix(in srgb, var(--c, var(--accent)) 35%, transparent);
+  }
+  .app-dot:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 
   .hub-tools{
     display:grid;grid-template-columns:1.3fr repeat(4, minmax(0, 0.675fr));gap:8px;
@@ -421,6 +443,7 @@
   .grid .unit:nth-child(9){animation-delay:.4s}
   .grid .unit:nth-child(10){animation-delay:.43s}
   .grid .unit:nth-child(11){animation-delay:.46s}
+  .grid .unit:nth-child(12){animation-delay:.49s}
   @media(max-width:1100px){
     .grid{grid-template-columns:repeat(3,1fr)}
   }
@@ -945,6 +968,14 @@ const UNITS = [
     href:'https://planomy.github.io/monsters/', ready:true }
 ];
 
+const APPS = [
+  { id:'supacoach',  label:'SupaCoach',  short:'SC', href:'https://planomy.github.io/supacoach/',  color:'#c45c4a' },
+  { id:'grannyboom', label:'Granny Boom', short:'GB', href:'https://grannyboom.com/', color:'#c9a227' },
+  { id:'trellis',    label:'Trellis',    short:'Tr', href:'https://planomy.github.io/trellis/',    color:'#3d9b5f' },
+  { id:'squardle',   label:'Squardle',   short:'Sq', href:'https://squardle.app/',                 color:'#4a7ec7' },
+  { id:'mightypens', label:'Mighty Pens', short:'MP', href:'https://planomy.github.io/mightypens/', color:'#2a9d8f' }
+];
+
 const grid = document.getElementById('units');
 grid.innerHTML = UNITS.map(u => {
   const cls = `unit ${u.id}${u.ready ? '' : ' off'}`;
@@ -954,7 +985,17 @@ grid.innerHTML = UNITS.map(u => {
     return `<a class="${cls}" href="${u.href}" target="_blank" rel="noopener">${inner}</a>`;
   }
   return `<div class="${cls}" aria-disabled="true">${inner}</div>`;
-}).join('');
+}).join('') + `
+  <div class="unit apps">
+    <span class="subj">More apps</span>
+    <span class="meta">Writing tools & word games</span>
+    <div class="app-dots" role="list">
+      ${APPS.map(a => `
+        <a class="app-dot" role="listitem" href="${a.href}" target="_blank" rel="noopener"
+           style="--c:${a.color}" title="${a.label}" aria-label="${a.label}">${a.short}</a>
+      `).join('')}
+    </div>
+  </div>`;
 
 const todayDaysEl = document.getElementById('todayDays');
 if(todayDaysEl){
