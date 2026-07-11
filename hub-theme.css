@@ -1,73 +1,187 @@
-/* Teach hub — light / dark theme */
-[data-theme="light"]{
-  color-scheme:light;
-  --bg0:#f3f1f8;
-  --bg1:#ffffff;
-  --bg2:#ebe8f2;
-  --ink:#1a1528;
-  --ink-dim:#3f3856;
-  --ink-faint:#6b6380;
-  --line:#c4bdd4;
-  --gold:#b88200;
-  --gold2:#8a5f00;
-  --good:#2a9d5c;
-  --warn:#b88900;
-  --bad:#c44d3a;
-}
+/* Teach hub — theme toggle + light mode */
 
 .page-top{
-  display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;
 }
 .page-top h1{margin-bottom:0}
 
 .theme-toggle{
   flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;
-  width:36px;height:36px;border-radius:999px;border:1px solid var(--line);
-  background:var(--bg2);color:var(--ink);cursor:pointer;padding:0;
-  transition:border-color .15s,background .15s;
+  width:40px;height:40px;border-radius:12px;border:1px solid var(--line, rgba(255,255,255,.1));
+  background:var(--card, var(--bg2));color:var(--ink);cursor:pointer;padding:0;
+  transition:border-color .15s,background .15s,transform .15s;
 }
-.theme-toggle:hover{border-color:var(--gold)}
-.theme-toggle svg{width:17px;height:17px;display:block}
+.theme-toggle:hover{border-color:var(--accent);transform:translateY(-1px)}
+.theme-toggle svg{width:18px;height:18px;display:block}
 .top .theme-toggle{margin-left:auto}
 .theme-toggle .icon-moon{display:none}
 [data-theme="light"] .theme-toggle .icon-sun{display:none}
 [data-theme="light"] .theme-toggle .icon-moon{display:block}
 
-/* Index dashboard */
-[data-theme="light"] .term-block{
-  border-color:rgba(0,0,0,.08);
-  box-shadow:0 12px 32px rgba(30,24,48,.07);
+/* —— Light: ink & paper —— */
+[data-theme="light"]{
+  color-scheme:light;
+  --bg0:#eceae4;
+  --bg1:#ffffff;
+  --bg2:#f4f2ec;
+  --ink:#1a1915;
+  --ink-dim:#4a4740;
+  --ink-faint:#7a766c;
+  --line:rgba(26,25,21,.08);
+  --accent:#0f766e;
+  --accent-dim:rgba(15,118,110,.12);
+  --cta:#0f766e;
+  --cta-hover:#0d9488;
+  --card:#ffffff;
+  --card-border:rgba(26,25,21,.08);
+  --shadow:0 1px 2px rgba(26,25,21,.04), 0 8px 24px rgba(26,25,21,.06);
+  --shadow-hover:0 1px 2px rgba(26,25,21,.05), 0 14px 32px rgba(26,25,21,.1);
 }
-[data-theme="light"] .term-head{border-bottom-color:rgba(0,0,0,.08)}
-[data-theme="light"] .unit{
-  background:rgba(0,0,0,.025);
-  border-color:rgba(0,0,0,.09);
-}
-[data-theme="light"] a.unit:hover{background:rgba(0,0,0,.05)}
-[data-theme="light"] .badge.soon{
-  background:rgba(0,0,0,.04);
-  border-color:rgba(0,0,0,.1);
-}
-[data-theme="light"] .tool-card{border-color:rgba(0,0,0,.1)!important;background:rgba(255,255,255,.7)!important}
-[data-theme="light"] .tool-card.events strong{color:#9a6800}
-[data-theme="light"] .tool-card.meetings strong{color:#3d6eb0}
-[data-theme="light"] .tool-card.reminders strong{color:#b85a48}
-[data-theme="light"] .tool-card strong{color:#2a7a4a}
-[data-theme="light"] .tool-list .row-item{border-bottom-color:rgba(0,0,0,.06)}
-[data-theme="light"] .tool-expand:hover{background:rgba(0,0,0,.06)}
 
-/* Subpages — sticky / top bars */
+[data-theme="light"] body{
+  background:
+    radial-gradient(ellipse 80% 50% at 0% 0%, rgba(15,118,110,.07), transparent 50%),
+    radial-gradient(ellipse 60% 40% at 100% 10%, rgba(180,140,80,.05), transparent 45%),
+    var(--bg0);
+}
+
+[data-theme="light"] .hero-text h1{color:var(--ink)}
+[data-theme="light"] .hero-sub{color:var(--ink-faint)}
+[data-theme="light"] .term-block{background:transparent;border:none;box-shadow:none;padding:0}
+[data-theme="light"] .term-head{border:none;padding:0}
+[data-theme="light"] .term-head h2{color:var(--ink)}
+
+[data-theme="light"] .tool-card,
+[data-theme="light"] .unit{
+  background:var(--card);
+  border:1px solid var(--card-border);
+  box-shadow:var(--shadow);
+}
+[data-theme="light"] .tool-card:hover,
+[data-theme="light"] a.unit:hover{box-shadow:var(--shadow-hover)}
+
+[data-theme="light"] .unit.maths{--mark:#b8860b}
+[data-theme="light"] .unit.hass{--mark:#b54a3a}
+[data-theme="light"] .unit.science{--mark:#0f766e}
+[data-theme="light"] .unit.english{--mark:#3b6ea5}
+[data-theme="light"] .unit.art{--mark:#a35a88}
+[data-theme="light"] .unit.drama{--mark:#6f54a8}
+[data-theme="light"] .unit.spelling{--mark:#2f8a4e}
+[data-theme="light"] .unit.mathsfacts{--mark:#a88b12}
+[data-theme="light"] .unit.reading{--mark:#b05f2a}
+[data-theme="light"] .unit.engage{--mark:#0f766e}
+[data-theme="light"] .unit.monsters{--mark:#b54a3a}
+
+[data-theme="light"] .tool-quick input[type=text],
+[data-theme="light"] .tool-quick input:not([type]),
+[data-theme="light"] .date-pick .cal-face{
+  background:var(--bg2);
+}
+[data-theme="light"] .tool-quick input:focus{
+  background:#fff;
+  border-color:rgba(15,118,110,.35);
+  box-shadow:0 0 0 3px rgba(15,118,110,.1);
+}
+[data-theme="light"] .tool-quick button{
+  background:var(--cta);
+  box-shadow:0 2px 8px rgba(15,118,110,.25);
+}
+[data-theme="light"] .tool-quick button:hover{background:var(--cta-hover)}
+
+[data-theme="light"] .flip-pair{
+  box-shadow:0 4px 14px rgba(26,25,21,.18);
+}
+[data-theme="light"] .flip-digit .base,
+[data-theme="light"] .flip-digit .flap{background:#1a1915}
+[data-theme="light"] .flip-digit .base span,
+[data-theme="light"] .flip-digit .flap span{color:#f3f1ea}
+[data-theme="light"] .flip-colon{color:var(--ink);opacity:.35}
+
+[data-theme="light"] .theme-toggle{
+  background:#fff;
+  border:1px solid var(--card-border);
+  box-shadow:var(--shadow);
+}
+[data-theme="light"] .theme-toggle:hover{background:var(--accent-dim);border-color:transparent}
+
+[data-theme="light"] footer a{color:var(--accent)}
+
+/* Subpages */
 [data-theme="light"] .top{
-  background:rgba(243,241,248,.95);
-  border-bottom-color:rgba(0,0,0,.08);
+  background:rgba(236,234,228,.92);
+  border-bottom:1px solid var(--line);
+  backdrop-filter:blur(12px);
 }
 [data-theme="light"] .card,
 [data-theme="light"] .class-note,
 [data-theme="light"] .roster-panel,
 [data-theme="light"] .modal-card{
-  border-color:rgba(0,0,0,.08);
+  border:1px solid var(--card-border);
+  box-shadow:var(--shadow);
+  background:var(--card);
 }
-[data-theme="light"] td{background:var(--bg1);border-color:rgba(0,0,0,.07)}
-[data-theme="light"] tr.focus td{background:rgba(184,130,0,.08);border-color:rgba(184,130,0,.25)}
-[data-theme="light"] .item{border-bottom-color:rgba(0,0,0,.06)}
-[data-theme="light"] .modal{background:rgba(0,0,0,.45)}
+[data-theme="light"] td{background:var(--bg1);border-color:var(--line)}
+[data-theme="light"] tr.focus td{
+  background:rgba(15,118,110,.06);
+  border-color:rgba(15,118,110,.22);
+}
+[data-theme="light"] .item{border-bottom-color:var(--line)}
+[data-theme="light"] .modal{background:rgba(26,25,21,.4)}
+[data-theme="light"] a{color:var(--accent)}
+[data-theme="light"] .btn.primary{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:#fff;
+  box-shadow:0 2px 8px rgba(15,118,110,.25);
+}
+[data-theme="light"] .btn.good{
+  background:rgba(15,118,110,.1);
+  border-color:rgba(15,118,110,.25);
+  color:var(--accent);
+}
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea{
+  background:var(--bg2);
+  border:1px solid transparent;
+}
+[data-theme="light"] input:focus,
+[data-theme="light"] select:focus,
+[data-theme="light"] textarea:focus{
+  outline:none;
+  background:#fff;
+  box-shadow:0 0 0 2px var(--accent);
+}
+
+[data-theme="light"] .today-block{
+  background:var(--card);
+  border:1px solid var(--card-border);
+  box-shadow:var(--shadow);
+}
+[data-theme="light"] .today-days button.active{
+  background:var(--accent);
+  color:#fff;
+}
+[data-theme="light"] .slot.now{
+  background:var(--accent-dim);
+}
+[data-theme="light"] .slot.break{
+  background:color-mix(in srgb, var(--ink) 10%, var(--bg2));
+}
+[data-theme="light"] .week-modal{background:rgba(26,25,21,.35)}
+[data-theme="light"] .week-panel{
+  background:var(--card);
+  border:1px solid var(--card-border);
+  box-shadow:0 24px 60px rgba(26,25,21,.18);
+}
+[data-theme="light"] .week-day{background:var(--bg2)}
+[data-theme="light"] .week-slot{background:#fff}
+[data-theme="light"] .week-slot input,
+[data-theme="light"] .week-slot select{background:var(--bg2)}
+[data-theme="light"] .week-slot input:focus,
+[data-theme="light"] .week-slot select:focus{background:#fff}
+[data-theme="light"] .week-btn.primary{
+  background:var(--cta);
+  border-color:var(--cta);
+  color:#fff;
+}

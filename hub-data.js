@@ -2,7 +2,8 @@ const HubStore = (() => {
   const KEYS = {
     events: 'teach-events',
     meetings: 'teach-meetings',
-    reminders: 'teach-reminders'
+    reminders: 'teach-reminders',
+    timetable: 'teach-timetable'
   };
 
   function uid() {
@@ -122,6 +123,24 @@ const HubStore = (() => {
     removeReminder(id) {
       const list = load('reminders').filter(x => x.id !== id);
       save('reminders', list);
+    },
+
+    getTimetable(fallback) {
+      try {
+        const raw = localStorage.getItem(KEYS.timetable);
+        if (!raw) return JSON.parse(JSON.stringify(fallback));
+        const data = JSON.parse(raw);
+        if (!data || typeof data !== 'object') return JSON.parse(JSON.stringify(fallback));
+        return data;
+      } catch (e) {
+        return JSON.parse(JSON.stringify(fallback));
+      }
+    },
+    setTimetable(data) {
+      localStorage.setItem(KEYS.timetable, JSON.stringify(data));
+    },
+    resetTimetable() {
+      localStorage.removeItem(KEYS.timetable);
     }
   };
 })();
