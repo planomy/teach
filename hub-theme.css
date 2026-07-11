@@ -88,14 +88,9 @@
 }
 [data-theme="light"] .tool-quick button:hover{background:var(--cta-hover)}
 
-[data-theme="light"] .flip-pair{
-  box-shadow:0 4px 14px rgba(26,25,21,.18);
+[data-theme="light"] .flip-clock{
+  box-shadow:var(--shadow);
 }
-[data-theme="light"] .flip-digit .base,
-[data-theme="light"] .flip-digit .flap{background:#1a1915}
-[data-theme="light"] .flip-digit .base span,
-[data-theme="light"] .flip-digit .flap span{color:#f3f1ea}
-[data-theme="light"] .flip-colon{color:var(--ink);opacity:.35}
 
 [data-theme="light"] .theme-toggle{
   background:#fff;

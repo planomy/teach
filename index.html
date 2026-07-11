@@ -275,57 +275,120 @@
 
   .page-actions{display:flex;align-items:center;gap:12px;margin-left:auto;flex-shrink:0}
   .flip-clock{
-    display:flex;align-items:center;gap:4px;
+    display:flex;align-items:stretch;gap:0;
+    height:44px;border-radius:10px;overflow:hidden;
+    border:1px solid rgba(0,0,0,.35);
+    box-shadow:var(--shadow);
     font-variant-numeric:tabular-nums;user-select:none;
+    background:#0f0e0c;
   }
-  .flip-colon{
-    font-size:16px;font-weight:600;color:var(--ink-faint);
-    line-height:1;padding-bottom:2px;opacity:.65;
+  .flip-panel{
+    position:relative;display:flex;flex-direction:column;
+    min-width:0;
   }
-  .flip-pair{
-    display:flex;border-radius:7px;overflow:hidden;
-    box-shadow:0 4px 12px rgba(0,0,0,.4);
+  .flip-panel.flip-time{
+    flex:1 1 auto;min-width:118px;
+    display:flex;align-items:center;justify-content:center;
+    background:
+      linear-gradient(#3b2418 0 50%, #0f0e0c 50% 100%);
   }
-  .flip-digit{position:relative;width:22px;height:34px;perspective:120px}
-  .flip-digit + .flip-digit{border-left:1px solid rgba(0,0,0,.45)}
+  .flip-panel.flip-time::after{
+    content:'';position:absolute;left:0;right:0;top:50%;height:1px;
+    background:rgba(0,0,0,.65);pointer-events:none;z-index:5;
+  }
+  .flip-panel.flip-date{
+    flex:0 0 46px;border-left:1px solid rgba(243,241,234,.12);
+  }
+  .flip-half{
+    flex:1;display:flex;align-items:center;justify-content:center;gap:5px;
+    overflow:hidden;position:relative;
+  }
+  .flip-half.upper{
+    background:#3b2418;
+    border-bottom:1px solid rgba(0,0,0,.65);
+  }
+  .flip-half.lower{background:#0f0e0c}
+  .flip-time-row{
+    position:relative;z-index:2;
+    display:flex;align-items:flex-end;gap:1px;
+    padding:0 8px 0 6px;
+  }
+  .flip-digit{
+    position:relative;width:18px;height:36px;perspective:140px;
+  }
   .flip-digit .base,
   .flip-digit .flap{
     position:absolute;left:0;width:100%;height:50%;
-    overflow:hidden;background:#0e100c;
+    overflow:hidden;background:transparent;
   }
-  .flip-digit .base.top{top:0;border-bottom:1px solid rgba(0,0,0,.35)}
-  .flip-digit .base.bottom{bottom:0;border-top:none}
+  .flip-digit .base.upper{top:0}
+  .flip-digit .base.lower{bottom:0}
   .flip-digit .base span,
   .flip-digit .flap span{
-    position:absolute;left:0;width:100%;height:34px;
+    position:absolute;left:0;width:100%;height:36px;
     display:flex;align-items:center;justify-content:center;
     font-family:var(--font);
-    font-size:17px;font-weight:600;color:#f3f1ea;
-    line-height:1;letter-spacing:-.02em;
+    font-size:22px;font-weight:700;letter-spacing:-.03em;line-height:1;
+    color:#f3f1ea;text-shadow:0 1px 2px rgba(0,0,0,.5);
   }
-  .flip-digit .base.top span{top:0}
-  .flip-digit .base.bottom span{bottom:0}
+  .flip-digit .base.upper span,
+  .flip-digit .flap.upper span{top:0}
+  .flip-digit .base.lower span,
+  .flip-digit .flap.lower span{bottom:0}
   .flip-digit .flap{
     z-index:2;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+    background:#3b2418;
   }
-  .flip-digit .flap.top{
-    top:0;border-bottom:1px solid rgba(0,0,0,.35);
+  .flip-digit .flap.upper{
+    top:0;border-bottom:1px solid rgba(0,0,0,.65);
     transform-origin:center bottom;
   }
-  .flip-digit .flap.bottom{
-    bottom:0;border-top:none;
+  .flip-digit .flap.lower{
+    bottom:0;background:#0f0e0c;
     transform-origin:center top;transform:rotateX(90deg);z-index:1;
   }
-  .flip-digit .flap.top span{top:0}
-  .flip-digit .flap.bottom span{bottom:0}
-  .flip-digit.flip .flap.top{animation:flipTop .45s ease-in forwards}
-  .flip-digit.flip .flap.bottom{animation:flipBottom .45s ease-out forwards}
+  .flip-digit.flip .flap.upper{animation:flipTop .45s ease-in forwards}
+  .flip-digit.flip .flap.lower{animation:flipBottom .45s ease-out forwards}
   @keyframes flipTop{0%{transform:rotateX(0)}100%{transform:rotateX(-90deg)}}
   @keyframes flipBottom{0%{transform:rotateX(90deg)}100%{transform:rotateX(0)}}
+  .flip-colon{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:6px;width:7px;height:36px;flex-shrink:0;align-self:center;
+  }
+  .flip-colon i{
+    display:block;width:3px;height:3px;border-radius:50%;
+    background:#f3f1ea;
+    box-shadow:0 1px 1px rgba(0,0,0,.4);
+  }
+  .flip-ampm{
+    font-family:var(--font);
+    font-size:9px;font-weight:700;letter-spacing:.06em;
+    color:rgba(243,241,234,.82);
+    line-height:1;margin:0 0 5px 4px;
+  }
+  .flip-dow{
+    font-family:var(--font);
+    font-size:11px;font-weight:700;letter-spacing:.08em;
+    color:rgba(243,241,234,.88);
+    align-self:flex-end;
+    margin-bottom:2px;
+  }
+  .flip-dom{
+    font-family:var(--font);
+    font-size:18px;font-weight:700;letter-spacing:-.02em;line-height:1;
+    color:#f3f1ea;
+    text-shadow:0 1px 2px rgba(0,0,0,.5);
+    align-self:flex-start;
+    margin-top:1px;
+  }
   @media(max-width:520px){
-    .flip-digit{width:20px;height:32px}
-    .flip-digit .base span,.flip-digit .flap span{height:32px;font-size:16px}
-    .flip-colon{font-size:15px}
+    .flip-clock{height:40px}
+    .flip-panel.flip-time{min-width:104px}
+    .flip-panel.flip-date{flex-basis:42px}
+    .flip-digit{width:16px;height:32px}
+    .flip-digit .base span,.flip-digit .flap span{height:32px;font-size:19px}
+    .flip-colon{height:32px;gap:5px}
+    .flip-dom{font-size:16px}
   }
 
   .hub-tools .tool-card,
@@ -1273,16 +1336,17 @@ setInterval(renderToday, 30000);
 (function initFlipClock(){
   const root = document.getElementById('flipClock');
   if(!root) return;
+  const DAYS = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
   const digits = [];
 
   function makeDigit(){
     const el = document.createElement('div');
     el.className = 'flip-digit';
     el.innerHTML = `
-      <div class="base top"><span>0</span></div>
-      <div class="base bottom"><span>0</span></div>
-      <div class="flap top"><span>0</span></div>
-      <div class="flap bottom"><span>0</span></div>`;
+      <div class="base upper"><span>0</span></div>
+      <div class="base lower"><span>0</span></div>
+      <div class="flap upper"><span>0</span></div>
+      <div class="flap lower"><span>0</span></div>`;
     el._val = '0';
     return el;
   }
@@ -1292,12 +1356,11 @@ setInterval(renderToday, 30000);
     if(el._val === next) return;
     const prev = el._val;
     el._val = next;
-    const topBase = el.querySelector('.base.top span');
-    const botBase = el.querySelector('.base.bottom span');
-    const topFlap = el.querySelector('.flap.top span');
-    const botFlap = el.querySelector('.flap.bottom span');
-    const flapTop = el.querySelector('.flap.top');
-    const flapBot = el.querySelector('.flap.bottom');
+    const topBase = el.querySelector('.base.upper span');
+    const botBase = el.querySelector('.base.lower span');
+    const topFlap = el.querySelector('.flap.upper span');
+    const botFlap = el.querySelector('.flap.lower span');
+    const flapTop = el.querySelector('.flap.upper');
 
     if(!animate){
       topBase.textContent = next;
@@ -1325,38 +1388,54 @@ setInterval(renderToday, 30000);
     flapTop.addEventListener('animationend', done);
   }
 
-  function build(){
-    root.innerHTML = '';
-    digits.length = 0;
-    for(let g = 0; g < 3; g++){
-      if(g > 0){
-        const c = document.createElement('span');
-        c.className = 'flip-colon';
-        c.textContent = ':';
-        root.appendChild(c);
-      }
-      const pair = document.createElement('div');
-      pair.className = 'flip-pair';
-      for(let i = 0; i < 2; i++){
-        const d = makeDigit();
-        digits.push(d);
-        pair.appendChild(d);
-      }
-      root.appendChild(pair);
-    }
+  root.innerHTML = `
+    <div class="flip-panel flip-time">
+      <div class="flip-time-row" id="flipTimeRow"></div>
+    </div>
+    <div class="flip-panel flip-date">
+      <div class="flip-half upper"><span class="flip-dow">MON</span></div>
+      <div class="flip-half lower"><span class="flip-dom">1</span></div>
+    </div>`;
+
+  const row = document.getElementById('flipTimeRow');
+  for(let i = 0; i < 2; i++){
+    const d = makeDigit();
+    digits.push(d);
+    row.appendChild(d);
   }
+  const colon = document.createElement('span');
+  colon.className = 'flip-colon';
+  colon.setAttribute('aria-hidden', 'true');
+  colon.innerHTML = '<i></i><i></i>';
+  row.appendChild(colon);
+  for(let i = 0; i < 2; i++){
+    const d = makeDigit();
+    digits.push(d);
+    row.appendChild(d);
+  }
+  const ampmEl = document.createElement('span');
+  ampmEl.className = 'flip-ampm';
+  ampmEl.textContent = 'AM';
+  row.appendChild(ampmEl);
+
+  const dow = root.querySelector('.flip-dow');
+  const dom = root.querySelector('.flip-dom');
 
   function tick(animate){
     const now = new Date();
-    const h = String(now.getHours()).padStart(2, '0');
+    let h = now.getHours();
     const m = String(now.getMinutes()).padStart(2, '0');
-    const s = String(now.getSeconds()).padStart(2, '0');
-    const str = h + m + s;
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    const hh = String(h).padStart(2, '0');
+    const str = hh + m;
     digits.forEach((d, i) => setDigit(d, str[i], animate));
-    root.setAttribute('aria-label', `Current time ${h}:${m}:${s}`);
+    ampmEl.textContent = ampm;
+    dow.textContent = DAYS[now.getDay()];
+    dom.textContent = String(now.getDate());
+    root.setAttribute('aria-label', `Current time ${hh}:${m} ${ampm}, ${DAYS[now.getDay()]} ${now.getDate()}`);
   }
 
-  build();
   tick(false);
   setInterval(() => tick(true), 1000);
 })();
