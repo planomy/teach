@@ -76,17 +76,17 @@
 
   .grid{
     display:grid;grid-template-columns:repeat(4,1fr);
-    gap:8px;align-content:start;
+    grid-auto-rows:1fr;gap:8px;align-content:stretch;
   }
   .unit{
-    display:flex;flex-direction:column;gap:3px;
-    padding:10px 12px 10px;
+    display:flex;flex-direction:column;gap:3px;justify-content:flex-start;
+    padding:12px 12px 10px;
     border-radius:12px;
     border:1px solid var(--card-border);
     background:var(--card);
     text-decoration:none;color:inherit;
     box-shadow:var(--shadow);
-    position:relative;
+    position:relative;min-height:0;
     transition:transform .22s cubic-bezier(.2,.8,.2,1), box-shadow .22s, border-color .22s;
   }
   .unit::before{
@@ -110,6 +110,14 @@
     font-size:11px;color:var(--ink-faint);line-height:1.35;
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
   }
+  .unit .assess{
+    margin-top:auto;padding-top:6px;
+    font-size:10.5px;line-height:1.35;color:var(--ink-dim);
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .unit .assess b{
+    font-weight:650;color:var(--ink-faint);letter-spacing:.02em;
+  }
   .unit.maths{--mark:#d4a017}
   .unit.hass{--mark:#c45c4a}
   .unit.science{--mark:#2a9d8f}
@@ -123,7 +131,7 @@
   .unit.monsters{--mark:#c45c4a}
 
   .hub-tools{
-    display:grid;grid-template-columns:repeat(4,1fr);gap:8px;
+    display:grid;grid-template-columns:1.3fr 0.9fr 0.9fr 0.9fr;gap:8px;
     flex-shrink:0;align-items:stretch;
   }
   .tool-card{
@@ -208,6 +216,49 @@
     font-size:12px;color:var(--ink-faint);line-height:1.45;margin-top:4px;
   }
 
+  .class-heat{
+    flex:1;min-height:120px;position:relative;border-radius:12px;overflow:hidden;
+    background:
+      radial-gradient(ellipse 80% 70% at 50% 60%, color-mix(in srgb, var(--heat-avg, var(--accent)) 18%, transparent), transparent 70%),
+      var(--bg2);
+    border:1px solid var(--line);
+    display:flex;flex-direction:column;padding:8px 8px 6px;gap:6px;
+  }
+  .heat-meta{
+    display:flex;align-items:baseline;justify-content:space-between;gap:8px;
+    padding:0 2px;flex-shrink:0;
+  }
+  .heat-meta strong{
+    font-family:var(--display);font-size:13px;font-weight:600;letter-spacing:-.02em;
+    color:var(--ink);
+  }
+  .heat-meta span{font-size:10px;color:var(--ink-faint);font-weight:600}
+  .heat-sky{
+    flex:1;min-height:72px;position:relative;display:block;
+    text-decoration:none;color:inherit;border-radius:8px;
+  }
+  .heat-ember{
+    position:absolute;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:8px;font-weight:700;color:#fff;letter-spacing:-.03em;
+    text-shadow:0 1px 2px rgba(0,0,0,.4);
+    transform:translate(-50%,-50%);
+    animation:emberFloat 4.5s ease-in-out infinite;
+  }
+  .heat-ember:hover{z-index:2;filter:brightness(1.08)}
+  .heat-ember.cold{
+    background:transparent;color:var(--ink-faint);text-shadow:none;
+    box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--ink-faint) 50%, transparent);
+  }
+  .heat-empty{
+    flex:1;display:flex;align-items:center;justify-content:center;text-align:center;
+    font-size:11px;color:var(--ink-faint);line-height:1.4;padding:8px;
+  }
+  @keyframes emberFloat{
+    0%,100%{transform:translate(-50%,-50%)}
+    50%{transform:translate(-50%,calc(-50% - 3px))}
+  }
+
   footer{display:none}
   @media(max-width:900px){
     html,body{height:auto;overflow:auto}
@@ -215,8 +266,8 @@
     .wrap{height:auto;max-width:1080px}
     .main-split{grid-template-columns:1fr;flex:none}
     .hub-tools{grid-template-columns:repeat(2,1fr)}
-    .grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
-    .unit{min-height:0}
+    .grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));grid-auto-rows:auto;height:auto!important}
+    .unit{min-height:88px}
     footer{display:block;margin-top:16px;text-align:center;font-size:11px;color:var(--ink-faint)}
     footer a{color:var(--accent)}
   }
@@ -492,7 +543,9 @@
         <strong>Student notes</strong>
         <a class="tool-expand" href="notes.html" title="Open student notes"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2h4v4M6 14H2v-4M14 2 9 7M2 14l5-5"/></svg></a>
       </div>
-      <span class="desc">Track effort, participation, tasks and results while you teach.</span>
+      <div class="class-heat" id="classHeat" aria-label="Class heat snapshot">
+        <div class="heat-empty">Open notes and rate a few students — heat appears here</div>
+      </div>
     </div>
 
     <div class="tool-card events">
@@ -719,6 +772,20 @@ function renderTodayDays(){
   }).join('');
 }
 
+function syncUnitsToTimetable(){
+  const today = document.querySelector('.today-block');
+  const head = document.querySelector('.term-head');
+  const grid = document.getElementById('units');
+  if(!today || !grid) return;
+  if(window.matchMedia('(max-width:900px)').matches){
+    grid.style.height = '';
+    return;
+  }
+  const headH = head ? head.offsetHeight + 8 : 0;
+  const h = Math.max(160, today.offsetHeight - headH);
+  grid.style.height = h + 'px';
+}
+
 function renderToday(){
   const day = pickDay();
   const slots = (TIMETABLE[day] || []).map(resolveSlot);
@@ -749,26 +816,49 @@ function renderToday(){
     }
     return `<div class="${classes}">${inner}</div>`;
   }).join('');
+  requestAnimationFrame(syncUnitsToTimetable);
 }
 
 const UNITS = [
-  { id:'maths',       label:'Maths',        meta:'Maths Heads · fractions, decimals, ×÷',     href:'https://planomy.github.io/mathsheads/',       ready:true },
-  { id:'hass',        label:'HASS',         meta:'Consumers · needs, wants & the school fete', href:'https://planomy.github.io/hassconsumers/',    ready:true },
-  { id:'science',     label:'Science',      meta:'States of Matter · investigation unit',      href:'https://planomy.github.io/sciencematter/',    ready:true },
-  { id:'english',     label:'English',      meta:'Renewable Energy · information report',      href:'https://planomy.github.io/renewableenergy/',  ready:true },
-  { id:'art',         label:'Art',          meta:'Term 3 unit — link coming soon',             ready:false },
-  { id:'drama',       label:'Drama',        meta:'Finding Your Voice · monologue & solo performance', href:'https://planomy.github.io/drama/',          ready:true },
-  { id:'spelling',    label:'Spelling',     meta:'Spell It · weekly spelling practice',        href:'https://planomy.github.io/spellit/',          ready:true },
-  { id:'mathsfacts',  label:'Maths Facts',  meta:'Mathies · fluency & facts practice',         href:'https://planomy.github.io/mathies/',          ready:true },
-  { id:'reading',     label:'Reading',      meta:'Reader · presentation unit',                 href:'https://planomy.github.io/reader/',           ready:true },
-  { id:'engage',      label:'Engage',       meta:'Student engagement continuum',               href:'https://planomy.github.io/engage/',           ready:true },
-  { id:'monsters',    label:'Monsterz',     meta:'Check-in · how are you feeling today?',      href:'https://planomy.github.io/monsters/',         ready:true }
+  { id:'maths',       label:'Maths',        meta:'Maths Heads · fractions, decimals, ×÷',
+    assess:'SA5 decimals & fractions · SA6 Down the drain investigation',
+    href:'https://planomy.github.io/mathsheads/', ready:true },
+  { id:'hass',        label:'HASS',         meta:'Consumers · needs, wants & the school fete',
+    assess:'Consumer decision-making · factors, sources & fete choices',
+    href:'https://planomy.github.io/hassconsumers/', ready:true },
+  { id:'science',     label:'Science',      meta:'States of Matter · solids, liquids & gases',
+    assess:'Part A classify & particles · Part B ice-melt investigation',
+    href:'https://planomy.github.io/sciencematter/', ready:true },
+  { id:'english',     label:'English',      meta:'Renewable Energy · information report',
+    assess:'Write an information report on a renewable energy source',
+    href:'https://planomy.github.io/renewableenergy/', ready:true },
+  { id:'art',         label:'Art',          meta:'Term 3 unit — link coming soon',
+    assess:'Assessment TBC', ready:false },
+  { id:'drama',       label:'Drama',        meta:'Finding Your Voice · monologue & solo performance',
+    assess:'Filmed one-minute monologue performed at home',
+    href:'https://planomy.github.io/drama/', ready:true },
+  { id:'spelling',    label:'Spelling',     meta:'Spell It · weekly spelling practice',
+    assess:'Weekly lists · pattern focus & dictation check-ins',
+    href:'https://planomy.github.io/spellit/', ready:true },
+  { id:'mathsfacts',  label:'Maths Facts',  meta:'Mathies · fluency & facts practice',
+    assess:'Timed fluency drills · ×÷ recall & number facts',
+    href:'https://planomy.github.io/mathies/', ready:true },
+  { id:'reading',     label:'Reading',      meta:'Reader · shared & independent reading',
+    assess:'Comprehension responses · reading conference notes',
+    href:'https://planomy.github.io/reader/', ready:true },
+  { id:'engage',      label:'Engage',       meta:'Student engagement continuum',
+    assess:'Quick pulse check · where is each learner today?',
+    href:'https://planomy.github.io/engage/', ready:true },
+  { id:'monsters',    label:'Monsterz',     meta:'Check-in · how are you feeling today?',
+    assess:'Wellbeing check-in · mood & readiness snapshot',
+    href:'https://planomy.github.io/monsters/', ready:true }
 ];
 
 const grid = document.getElementById('units');
 grid.innerHTML = UNITS.map(u => {
   const cls = `unit ${u.id}${u.ready ? '' : ' off'}`;
-  const inner = `<span class="subj">${u.label}</span><span class="meta">${u.meta}</span>`;
+  const assess = u.assess ? `<span class="assess"><b>Assess</b> · ${u.assess}</span>` : '';
+  const inner = `<span class="subj">${u.label}</span><span class="meta">${u.meta}</span>${assess}`;
   if (u.ready) {
     return `<a class="${cls}" href="${u.href}" target="_blank" rel="noopener">${inner}</a>`;
   }
@@ -1073,7 +1163,59 @@ function renderDashReminders(){
   `).join('');
 }
 
-function refreshDash(){ renderDashEvents(); renderDashMeetings(); renderDashReminders(); }
+function renderClassHeat(){
+  const el = document.getElementById('classHeat');
+  if(!el) return;
+  const snap = HubStore.classHeatSnapshot();
+  if(!snap.named){
+    el.style.removeProperty('--heat-avg');
+    el.innerHTML = '<div class="heat-empty">Open notes and rate a few students — heat appears here</div>';
+    return;
+  }
+  if(snap.color) el.style.setProperty('--heat-avg', snap.color);
+  else el.style.removeProperty('--heat-avg');
+
+  const avgLabel = snap.avg == null ? '—' : `${Math.round(snap.avg * 100)}%`;
+  const sub = snap.subject ? HubStore.esc(snap.subject) : 'Today';
+  const n = Math.max(snap.students.length, 1);
+  const unrated = snap.students.filter(st => !st.heat);
+  let unratedI = 0;
+  const embers = snap.students.map((st, i) => {
+    // X = roster order across full width; Y = trajectory (rising high, falling low)
+    const x = 6 + ((i + 0.5) / n) * 88;
+    let y = st.traj?.yPct;
+    if(y == null){
+      // fan unrated along the bottom band
+      const u = unrated.length <= 1 ? 0.5 : unratedI / (unrated.length - 1);
+      y = 70 + u * 18;
+      unratedI++;
+    }
+    const seed = [...st.name].reduce((a, c) => a + c.charCodeAt(0), 0);
+    const delay = ((seed % 20) / 10).toFixed(1);
+    const trajBit = st.traj?.lessons > 1
+      ? `${st.traj.arrow} ${st.traj.label}`
+      : st.traj?.label === 'new' ? 'first ratings' : 'no ratings yet';
+    if(!st.heat){
+      return `<span class="heat-ember cold" style="left:${x}%;top:${y}%;width:20px;height:20px;font-size:7px;animation-delay:${delay}s" title="${HubStore.esc(st.name)} · ${trajBit}">${HubStore.esc(st.initial)}</span>`;
+    }
+    const size = Math.round(17 + st.heat.score * 14);
+    return `<span class="heat-ember" style="left:${x}%;top:${y}%;width:${size}px;height:${size}px;background:${st.heat.color};box-shadow:0 0 ${8 + st.heat.score * 14}px color-mix(in srgb, ${st.heat.color} 55%, transparent);animation-delay:${delay}s" title="${HubStore.esc(st.name)} · ${st.heat.pct}% ${st.heat.label} · ${trajBit}">${HubStore.esc(st.initial)}</span>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="heat-meta">
+      <strong>${sub}</strong>
+      <span>${snap.rated}/${snap.named} lit · ${avgLabel} · ↑ rising</span>
+    </div>
+    <a class="heat-sky" href="notes.html" title="Colour = today · height = trajectory">${embers}</a>`;
+}
+
+function refreshDash(){
+  renderDashEvents();
+  renderDashMeetings();
+  renderDashReminders();
+  renderClassHeat();
+}
 
 document.getElementById('dashEvAdd').onclick = () => {
   HubStore.addEvent({ date: document.getElementById('dashEvDate').value, title: document.getElementById('dashEvTitle').value });
@@ -1123,6 +1265,8 @@ document.getElementById('remindersList').addEventListener('click', e => {
 
 refreshDash();
 renderToday();
+syncUnitsToTimetable();
+window.addEventListener('resize', syncUnitsToTimetable);
 setInterval(renderToday, 30000);
 
 /* —— Flip clock —— */

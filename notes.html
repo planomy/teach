@@ -93,6 +93,27 @@
   .name-cell{width:152px;max-width:152px}
   .name-cell input{width:100%;min-width:0;background:transparent;border:none;color:var(--ink);font-weight:700;font-size:13px;padding:4px}
   .name-cell input:focus{outline:none;background:rgba(255,255,255,.05);border-radius:6px}
+  .heat-cell{width:44px;text-align:center;padding:6px 4px!important}
+  .heat{
+    --heat: #6a7080;
+    width:28px;height:28px;margin:0 auto;border-radius:50%;
+    position:relative;display:grid;place-items:center;
+    background:
+      radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--heat) 55%, #fff), transparent 42%),
+      radial-gradient(circle at 50% 55%, var(--heat), color-mix(in srgb, var(--heat) 35%, #000));
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--heat) 35%, transparent),
+      0 0 14px color-mix(in srgb, var(--heat) 45%, transparent);
+    font-size:9px;font-weight:800;color:#fff;letter-spacing:-.02em;
+    text-shadow:0 1px 2px rgba(0,0,0,.45);
+  }
+  .heat.empty{
+    background:transparent;box-shadow:inset 0 0 0 1.5px var(--line);
+    color:transparent;text-shadow:none;
+  }
+  .heat.empty::after{
+    content:'';width:6px;height:6px;border-radius:50%;background:var(--ink-faint);opacity:.45;
+  }
 
   .rate{
     min-width:80px;text-align:center;font-size:12px;font-weight:800;padding:7px 5px;border-radius:8px;
@@ -271,7 +292,7 @@
     <textarea id="classNote" placeholder="General observations, tech issues, lesson pacing…"></textarea>
   </div>
 
-  <p class="hint" style="margin-bottom:10px">Tab through names and notes. Click a <b>Work</b> cell, then <b>⌘V / Ctrl+V</b> to paste — thumbnail appears. Click to enlarge. Use the <b>gear</b> menu for class list, report cards, save work, import and export.</p>
+  <p class="hint" style="margin-bottom:10px">Tab through names and notes. <b>Heat</b> blends effort, participation and tasks — red struggling → blue great. Click a <b>Work</b> cell, then <b>⌘V / Ctrl+V</b> to paste. Gear menu: class list, reports, save work, import/export.</p>
 
   <div class="table-bar">
     <span class="row-count" id="rowCount">20 rows</span>
@@ -284,6 +305,7 @@
     <colgroup>
       <col style="width:34px">
       <col style="width:152px">
+      <col style="width:44px">
       <col style="width:84px">
       <col style="width:102px">
       <col style="width:84px">
@@ -295,6 +317,7 @@
       <tr>
         <th>#</th>
         <th>Student</th>
+        <th title="Combined effort, participation & tasks">Heat</th>
         <th>Effort</th>
         <th>Participation</th>
         <th>Tasks</th>
@@ -345,6 +368,7 @@
 <input type="file" id="filePick" accept="image/*" hidden>
 <input type="file" id="importPick" accept="application/json,.json" hidden>
 
+<script src="hub-data.js"></script>
 <script>
 const EFFORT = ['—','1 Low','2','3 OK','4','5 High'];
 const PART = ['—','Distracting','Avoiding','Withdrawing','Participating','Investing','Driving'];
@@ -990,6 +1014,17 @@ function cycle(field, val, labels){
   return (val + 1) % labels.length;
 }
 
+function heatHtml(st){
+  const h = HubStore.studentHeat(st);
+  if(!h) return `<span class="heat empty" title="No ratings yet" aria-label="No heat yet"></span>`;
+  return `<span class="heat" style="--heat:${h.color}" title="Heat ${h.pct}% · ${h.label} (effort + participation + tasks)" aria-label="Heat ${h.pct} percent, ${h.label}">${h.pct}</span>`;
+}
+
+function paintHeat(tr, st){
+  const cell = tr?.querySelector('.heat-cell');
+  if(cell) cell.innerHTML = heatHtml(st);
+}
+
 function render(){
   const tb = document.getElementById('tbody');
   document.getElementById('rowCount').textContent = `${session.students.length} row${session.students.length===1?'':'s'}`;
@@ -998,6 +1033,7 @@ function render(){
     <tr data-id="${s.id}">
       <td class="num-cell">${i + 1}</td>
       <td class="name-cell"><input value="${esc(s.name)}" placeholder="Student ${i + 1}" data-k="name"></td>
+      <td class="heat-cell">${heatHtml(s)}</td>
       <td><button type="button" class="rate effort" data-k="effort" data-v="${s.effort}">${EFFORT[s.effort]}</button></td>
       <td><button type="button" class="rate part" data-k="part" data-v="${s.part}">${PART[s.part]}</button></td>
       <td><button type="button" class="rate task" data-k="task" data-v="${s.task}">${TASK[s.task]}</button></td>
@@ -1070,6 +1106,7 @@ function cycleRate(s, k, rate){
   if(k === 'effort'){ s.effort = cycle('effort', s.effort, EFFORT); rate.dataset.v = s.effort; rate.textContent = EFFORT[s.effort]; }
   if(k === 'part'){ s.part = cycle('part', s.part, PART); rate.dataset.v = s.part; rate.textContent = PART[s.part]; }
   if(k === 'task'){ s.task = cycle('task', s.task, TASK); rate.dataset.v = s.task; rate.textContent = TASK[s.task]; }
+  paintHeat(rate.closest('tr'), s);
   scheduleSave();
 }
 

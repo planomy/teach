@@ -141,6 +141,197 @@ const HubStore = (() => {
     },
     resetTimetable() {
       localStorage.removeItem(KEYS.timetable);
+    },
+
+    /** Composite 0–1 from effort / participation / tasks. null if nothing rated. */
+    studentHeat(st) {
+      if (!st) return null;
+      const parts = [];
+      const effort = +st.effort || 0;
+      const part = +st.part || 0;
+      const task = +st.task || 0;
+      if (effort > 0) parts.push(effort / 5);
+      if (part > 0) parts.push(part / 6);
+      if (task === 1) parts.push(1);
+      else if (task === 2) parts.push(0.55);
+      else if (task === 3) parts.push(0.12);
+      if (!parts.length) return null;
+      const score = parts.reduce((a, b) => a + b, 0) / parts.length;
+      return {
+        score,
+        pct: Math.round(score * 100),
+        label: score >= 0.8 ? 'Great' : score >= 0.55 ? 'Good' : score >= 0.35 ? 'Okay' : score >= 0.2 ? 'Low' : 'Struggling',
+        color: heatColor(score)
+      };
+    },
+
+    getNotesSession() {
+      try {
+        const raw = localStorage.getItem('teach-notes-session');
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        return null;
+      }
+    },
+
+    getNotesArchive() {
+      try {
+        const raw = localStorage.getItem('teach-notes-archive');
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        return [];
+      }
+    },
+
+    classHeatSnapshot(session) {
+      const s = session || this.getNotesSession();
+      if (!s || !Array.isArray(s.students)) {
+        return { students: [], avg: null, rated: 0, named: 0, subject: '', date: '' };
+      }
+
+      // Chronological heat history per student (oldest → newest)
+      const history = new Map();
+      const archive = this.getNotesArchive().slice().sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+      archive.forEach(sess => {
+        (sess.students || []).forEach(st => {
+          const name = (st.name || '').trim();
+          if (!name) return;
+          const heat = this.studentHeat(st);
+          if (!heat) return;
+          const key = name.toLowerCase();
+          if (!history.has(key)) history.set(key, []);
+          history.get(key).push(heat.score);
+        });
+      });
+      // Current session last
+      (s.students || []).forEach(st => {
+        const name = (st.name || '').trim();
+        if (!name) return;
+        const heat = this.studentHeat(st);
+        if (!heat) return;
+        const key = name.toLowerCase();
+        if (!history.has(key)) history.set(key, []);
+        history.get(key).push(heat.score);
+      });
+
+      const named = s.students
+        .filter(st => (st.name || '').trim())
+        .map(st => {
+          const name = (st.name || '').trim();
+          const parts = name.split(/\s+/).filter(Boolean);
+          const first = parts[0] || '';
+          const last = parts.length > 1 ? parts[parts.length - 1] : '';
+          return {
+            id: st.id,
+            name,
+            first,
+            last,
+            base: first.slice(0, 2),
+            heat: this.studentHeat(st)
+          };
+        });
+
+      // First 2 letters of first name; if clash, append first letter of last name
+      const baseCounts = {};
+      named.forEach(st => {
+        const key = st.base.toLowerCase();
+        baseCounts[key] = (baseCounts[key] || 0) + 1;
+      });
+
+      const students = named.map((st, index) => {
+        const clash = baseCounts[st.base.toLowerCase()] > 1;
+        let initial = st.base;
+        if (clash && st.last) initial = st.base + st.last.slice(0, 1);
+        initial = initial.slice(0, 3);
+        const scores = history.get(st.name.toLowerCase()) || [];
+        const traj = trajectoryFromScores(scores, st.heat ? st.heat.score : null);
+        return {
+          id: st.id,
+          name: st.name,
+          initial: initial.toUpperCase(),
+          heat: st.heat,
+          traj,
+          index
+        };
+      });
+      const rated = students.filter(x => x.heat);
+      const avg = rated.length
+        ? rated.reduce((a, x) => a + x.heat.score, 0) / rated.length
+        : null;
+      return {
+        students,
+        avg,
+        rated: rated.length,
+        named: students.length,
+        subject: s.subject || '',
+        date: s.date || '',
+        color: avg == null ? null : heatColor(avg)
+      };
     }
   };
+
+  function avgNums(arr) {
+    if (!arr.length) return null;
+    return arr.reduce((a, b) => a + b, 0) / arr.length;
+  }
+
+  /** Rising → high on sky; falling → low. Uses recent vs earlier lesson heats. */
+  function trajectoryFromScores(scores, currentScore) {
+    if (scores.length >= 2) {
+      const recentN = Math.min(3, Math.floor(scores.length / 2) || 1);
+      const recent = scores.slice(-recentN);
+      const earlier = scores.slice(0, -recentN);
+      const recentAvg = avgNums(recent);
+      const earlierAvg = avgNums(earlier.length ? earlier : scores.slice(0, -1));
+      const delta = recentAvg - earlierAvg;
+      // Map delta (~-0.5..0.5) onto vertical 0.1..0.9 (CSS top%; invert so high traj = low top%)
+      const yNorm = Math.max(0, Math.min(1, 0.5 + delta * 1.35));
+      const label = delta >= 0.07 ? 'rising' : delta <= -0.07 ? 'falling' : 'steady';
+      const arrow = label === 'rising' ? '↑' : label === 'falling' ? '↓' : '→';
+      return {
+        delta,
+        label,
+        arrow,
+        lessons: scores.length,
+        // CSS top%: rising kids near top of sky
+        yPct: 12 + (1 - yNorm) * 72
+      };
+    }
+    // First rated lesson: park by current heat so the sky isn't flat
+    if (currentScore != null) {
+      return {
+        delta: 0,
+        label: 'new',
+        arrow: '·',
+        lessons: 1,
+        yPct: 12 + (1 - currentScore) * 72
+      };
+    }
+    // Unrated: sit low, staggered so they don't stack on one line
+    return { delta: 0, label: 'unrated', arrow: '', lessons: 0, yPct: null };
+  }
+
+  function heatColor(score) {
+    // red (struggling) → orange → yellow → green → blue (thriving)
+    const stops = [
+      { t: 0,    c: [180, 55, 45] },
+      { t: 0.25, c: [210, 110, 40] },
+      { t: 0.45, c: [200, 160, 40] },
+      { t: 0.65, c: [50, 150, 95] },
+      { t: 0.85, c: [35, 130, 170] },
+      { t: 1,    c: [40, 100, 190] }
+    ];
+    const t = Math.max(0, Math.min(1, score));
+    let a = stops[0], b = stops[stops.length - 1];
+    for (let i = 0; i < stops.length - 1; i++) {
+      if (t >= stops[i].t && t <= stops[i + 1].t) {
+        a = stops[i];
+        b = stops[i + 1];
+        break;
+      }
+    }
+    const u = (t - a.t) / (b.t - a.t || 1);
+    const rgb = a.c.map((v, i) => Math.round(v + (b.c[i] - v) * u));
+    return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+  }
 })();
