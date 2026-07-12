@@ -309,12 +309,13 @@
 
   .page-actions{display:flex;align-items:center;gap:12px;margin-left:auto;flex-shrink:0}
   .flip-clock{
+    --flip-espresso:#1a120f;
     display:flex;align-items:stretch;gap:0;
     height:44px;border-radius:10px;overflow:hidden;
     border:1px solid rgba(0,0,0,.35);
     box-shadow:var(--shadow);
     font-variant-numeric:tabular-nums;user-select:none;
-    background:#0f0e0c;
+    background:var(--flip-espresso);
   }
   .flip-panel{
     position:relative;display:flex;flex-direction:column;
@@ -323,8 +324,7 @@
   .flip-panel.flip-time{
     flex:1 1 auto;min-width:118px;
     display:flex;align-items:center;justify-content:center;
-    background:
-      linear-gradient(#3b2418 0 50%, #0f0e0c 50% 100%);
+    background:var(--flip-espresso);
   }
   .flip-panel.flip-time::after{
     content:'';position:absolute;left:0;right:0;top:50%;height:1px;
@@ -338,10 +338,10 @@
     overflow:hidden;position:relative;
   }
   .flip-half.upper{
-    background:#3b2418;
+    background:var(--flip-espresso);
     border-bottom:1px solid rgba(0,0,0,.65);
   }
-  .flip-half.lower{background:#0f0e0c}
+  .flip-half.lower{background:var(--flip-espresso)}
   .flip-time-row{
     position:relative;z-index:2;
     display:flex;align-items:flex-end;gap:1px;
@@ -371,14 +371,14 @@
   .flip-digit .flap.lower span{bottom:0}
   .flip-digit .flap{
     z-index:2;backface-visibility:hidden;-webkit-backface-visibility:hidden;
-    background:#3b2418;
+    background:var(--flip-espresso);
   }
   .flip-digit .flap.upper{
     top:0;border-bottom:1px solid rgba(0,0,0,.65);
     transform-origin:center bottom;
   }
   .flip-digit .flap.lower{
-    bottom:0;background:#0f0e0c;
+    bottom:0;background:var(--flip-espresso);
     transform-origin:center top;transform:rotateX(90deg);z-index:1;
   }
   .flip-digit.flip .flap.upper{animation:flipTop .45s ease-in forwards}
