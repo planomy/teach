@@ -1326,22 +1326,21 @@ function renderClassHeat(){
   const snap = HubStore.classHeatSnapshot();
   if(!snap.named){
     setAvgColor(null);
-    el.innerHTML = '<div class="heat-empty">Open notes and rate a few students — heat appears here</div>';
+    el.innerHTML = '<div class="heat-empty">Save a few notes sessions — term heat builds here</div>';
     return;
   }
   setAvgColor(snap.color);
 
   const avgLabel = snap.avg == null ? '—' : `${Math.round(snap.avg * 100)}%`;
-  const sub = snap.subject ? HubStore.esc(snap.subject) : 'Today';
+  const lessonBit = snap.lessons ? `${snap.lessons} lesson${snap.lessons === 1 ? '' : 's'}` : 'term';
   const n = Math.max(snap.students.length, 1);
   const unrated = snap.students.filter(st => !st.heat);
   let unratedI = 0;
   const embers = snap.students.map((st, i) => {
-    // X = roster order across full width; Y = trajectory (rising high, falling low)
+    // X = roster order; Y = term trajectory (rising high, falling low)
     const x = 6 + ((i + 0.5) / n) * 88;
     let y = st.traj?.yPct;
     if(y == null){
-      // fan unrated along the bottom band
       const u = unrated.length <= 1 ? 0.5 : unratedI / (unrated.length - 1);
       y = 70 + u * 18;
       unratedI++;
@@ -1350,20 +1349,21 @@ function renderClassHeat(){
     const delay = ((seed % 20) / 10).toFixed(1);
     const trajBit = st.traj?.lessons > 1
       ? `${st.traj.arrow} ${st.traj.label}`
-      : st.traj?.label === 'new' ? 'first ratings' : 'no ratings yet';
+      : st.traj?.label === 'new' ? 'first lesson' : 'no ratings yet';
     if(!st.heat){
       return `<span class="heat-ember cold" style="left:${x}%;top:${y}%;width:20px;height:20px;font-size:7px;animation-delay:${delay}s" title="${HubStore.esc(st.name)} · ${trajBit}">${HubStore.esc(st.initial)}</span>`;
     }
     const size = Math.round(17 + st.heat.score * 14);
-    return `<span class="heat-ember" style="left:${x}%;top:${y}%;width:${size}px;height:${size}px;background:${st.heat.color};box-shadow:0 0 ${8 + st.heat.score * 14}px color-mix(in srgb, ${st.heat.color} 55%, transparent);animation-delay:${delay}s" title="${HubStore.esc(st.name)} · ${st.heat.pct}% ${st.heat.label} · ${trajBit}">${HubStore.esc(st.initial)}</span>`;
+    const lessons = st.heat.lessons || st.traj?.lessons || 1;
+    return `<span class="heat-ember" style="left:${x}%;top:${y}%;width:${size}px;height:${size}px;background:${st.heat.color};box-shadow:0 0 ${8 + st.heat.score * 14}px color-mix(in srgb, ${st.heat.color} 55%, transparent);animation-delay:${delay}s" title="${HubStore.esc(st.name)} · ${st.heat.pct}% term avg · ${lessons} lesson${lessons === 1 ? '' : 's'} · ${trajBit}">${HubStore.esc(st.initial)}</span>`;
   }).join('');
 
   el.innerHTML = `
     <div class="heat-meta">
-      <strong>${sub}</strong>
-      <span>${snap.rated}/${snap.named} lit · ${avgLabel} · ↑ rising</span>
+      <strong>Term heat</strong>
+      <span>${snap.rated}/${snap.named} · ${avgLabel} · ${lessonBit}</span>
     </div>
-    <a class="heat-sky" href="notes.html" title="Colour = today · height = trajectory">${embers}</a>`;
+    <a class="heat-sky" href="notes.html" title="Colour = term average · height = rising / falling">${embers}</a>`;
 }
 
 function refreshDash(){

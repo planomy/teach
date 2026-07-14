@@ -182,12 +182,7 @@ const HubStore = (() => {
       else if (task === 3) parts.push(0.12);
       if (!parts.length) return null;
       const score = parts.reduce((a, b) => a + b, 0) / parts.length;
-      return {
-        score,
-        pct: Math.round(score * 100),
-        label: score >= 0.8 ? 'Great' : score >= 0.55 ? 'Good' : score >= 0.35 ? 'Okay' : score >= 0.2 ? 'Low' : 'Struggling',
-        color: heatColor(score)
-      };
+      return heatFromScore(score);
     },
 
     getNotesSession() {
@@ -235,15 +230,15 @@ const HubStore = (() => {
       const row = this.getHeatCarry()[key];
       if (!row || row.score == null) return null;
       return {
-        score: row.score,
+        ...heatFromScore(row.score),
         pct: row.pct != null ? row.pct : Math.round(row.score * 100),
-        label: row.label || (row.score >= 0.8 ? 'Great' : row.score >= 0.55 ? 'Good' : row.score >= 0.35 ? 'Okay' : row.score >= 0.2 ? 'Low' : 'Struggling'),
+        label: row.label || heatFromScore(row.score).label,
         color: row.color || heatColor(row.score),
         carried: true
       };
     },
 
-    /** Latest heat for a name from current session, then archive (newest first). */
+    /** Latest single-lesson heat: current session, then archive (newest first), then carry. */
     latestHeatForName(name, session) {
       const key = (name || '').trim().toLowerCase();
       if (!key) return null;
@@ -259,6 +254,29 @@ const HubStore = (() => {
         if (h) return h;
       }
       return this.getHeatCarryFor(name);
+    },
+
+    /** Chronological heat scores across the term (oldest → newest). */
+    heatHistoryForName(name, session) {
+      const key = (name || '').trim().toLowerCase();
+      if (!key) return [];
+      const scores = [];
+      const s = session || this.getNotesSession();
+      // Skip the open lesson’s archive row so live + saved don’t double-count.
+      const skipId = s?.lastArchiveId || null;
+      // Archive is newest-first; reverse so history is oldest → newest (keeps same-day order).
+      this.getNotesArchive().slice().reverse().forEach(sess => {
+        if (skipId && sess.id === skipId) return;
+        const st = (sess.students || []).find(x => (x.name || '').trim().toLowerCase() === key);
+        const heat = this.studentHeat(st);
+        if (heat) scores.push(heat.score);
+      });
+      if (s?.students) {
+        const cur = s.students.find(st => (st.name || '').trim().toLowerCase() === key);
+        const heat = this.studentHeat(cur);
+        if (heat) scores.push(heat.score);
+      }
+      return scores;
     },
 
     buildHeatCarry(session) {
@@ -289,51 +307,41 @@ const HubStore = (() => {
       return map;
     },
 
+    /**
+     * Term-long class heat for the hub sky.
+     * Dot colour/size = ongoing (term-average) engagement; height = rising/falling trajectory.
+     * Card background = average of those ongoing student heats.
+     */
     classHeatSnapshot(session) {
       const s = session || this.getNotesSession();
       if (!s || !Array.isArray(s.students)) {
-        return { students: [], avg: null, rated: 0, named: 0, subject: '', date: '' };
+        return { students: [], avg: null, rated: 0, named: 0, subject: '', date: '', lessons: 0, color: null };
       }
 
-      // Chronological heat history per student (oldest → newest)
-      const history = new Map();
-      const archive = this.getNotesArchive().slice().sort((a, b) => (a.date || '').localeCompare(b.date || ''));
-      archive.forEach(sess => {
-        (sess.students || []).forEach(st => {
-          const name = (st.name || '').trim();
-          if (!name || st.absent) return;
-          const heat = this.studentHeat(st);
-          if (!heat) return;
-          const key = name.toLowerCase();
-          if (!history.has(key)) history.set(key, []);
-          history.get(key).push(heat.score);
-        });
-      });
-      // Current session last
-      (s.students || []).forEach(st => {
-        const name = (st.name || '').trim();
-        if (!name || st.absent) return;
-        const heat = this.studentHeat(st);
-        if (!heat) return;
-        const key = name.toLowerCase();
-        if (!history.has(key)) history.set(key, []);
-        history.get(key).push(heat.score);
-      });
+      const skipId = s.lastArchiveId || null;
+      const archivedOthers = this.getNotesArchive().filter(a => !skipId || a.id !== skipId).length;
+      const openInArchive = skipId && this.getNotesArchive().some(a => a.id === skipId);
+      const hasLiveHeat = s.students.some(st => this.studentHeat(st));
+      const lessonCount = archivedOthers + (hasLiveHeat || openInArchive ? 1 : 0);
 
       const named = s.students
-        .filter(st => (st.name || '').trim() && !st.absent)
+        .filter(st => (st.name || '').trim())
         .map(st => {
           const name = (st.name || '').trim();
           const parts = name.split(/\s+/).filter(Boolean);
           const first = parts[0] || '';
           const last = parts.length > 1 ? parts[parts.length - 1] : '';
-          const live = this.studentHeat(st);
-          const heat = live || this.getHeatCarryFor(name);
-          // Seed trajectory with carried heat when archive was cleared for a new term
-          if (heat?.carried) {
-            const key = name.toLowerCase();
-            if (!history.has(key) || !history.get(key).length) {
-              history.set(key, [heat.score]);
+          const scores = this.heatHistoryForName(name, s);
+          let heat = null;
+          if (scores.length) {
+            heat = heatFromScore(avgNums(scores));
+            heat.lessons = scores.length;
+            heat.ongoing = true;
+          } else {
+            heat = this.getHeatCarryFor(name);
+            if (heat) {
+              scores.push(heat.score);
+              heat.lessons = 1;
             }
           }
           return {
@@ -342,11 +350,11 @@ const HubStore = (() => {
             first,
             last,
             base: first.slice(0, 2),
-            heat
+            heat,
+            scores
           };
         });
 
-      // First 2 letters of first name; if clash, append first letter of last name
       const baseCounts = {};
       named.forEach(st => {
         const key = st.base.toLowerCase();
@@ -358,8 +366,7 @@ const HubStore = (() => {
         let initial = st.base;
         if (clash && st.last) initial = st.base + st.last.slice(0, 1);
         initial = initial.slice(0, 3);
-        const scores = history.get(st.name.toLowerCase()) || [];
-        const traj = trajectoryFromScores(scores, st.heat ? st.heat.score : null);
+        const traj = trajectoryFromScores(st.scores, st.heat ? st.heat.score : null);
         return {
           id: st.id,
           name: st.name,
@@ -380,6 +387,7 @@ const HubStore = (() => {
         named: students.length,
         subject: s.subject || '',
         date: s.date || '',
+        lessons: lessonCount,
         color: avg == null ? null : heatColor(avg)
       };
     }
@@ -388,6 +396,15 @@ const HubStore = (() => {
   function avgNums(arr) {
     if (!arr.length) return null;
     return arr.reduce((a, b) => a + b, 0) / arr.length;
+  }
+
+  function heatFromScore(score) {
+    return {
+      score,
+      pct: Math.round(score * 100),
+      label: score >= 0.8 ? 'Great' : score >= 0.55 ? 'Good' : score >= 0.35 ? 'Okay' : score >= 0.2 ? 'Low' : 'Struggling',
+      color: heatColor(score)
+    };
   }
 
   /** Rising → high on sky; falling → low. Uses recent vs earlier lesson heats. */
