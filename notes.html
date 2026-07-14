@@ -323,7 +323,8 @@
   </div>
   <div class="field wide"><label for="lesson">Lesson / focus</label><input id="lesson" placeholder="e.g. L1A · Is an empty glass empty?"></div>
   <div class="top-end">
-    <button class="btn primary" id="newSessionBtn" type="button">New session</button>
+    <button class="btn good" id="saveSessionBtn" type="button" title="Save this lesson to the archive">Save session</button>
+    <button class="btn primary" id="newSessionBtn" type="button" title="Start the next class (keeps names, clears marks)">New session</button>
     <button class="theme-toggle" type="button"></button>
     <div class="gear-wrap">
       <button class="gear-btn" id="gearBtn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="gearMenu" title="More tools" aria-label="More tools">
@@ -364,7 +365,7 @@
     <textarea id="classNote" placeholder="General observations, tech issues, lesson pacing…"></textarea>
   </div>
 
-  <p class="hint" style="margin-bottom:10px">Tab through names and notes. Use <b>In / Abs</b> for attendance — absent students skip heat and reports. <b>Mark all</b> sets ratings for everyone present, then tweak individuals. Gear: class list, reports, save work, import/export, new term.</p>
+  <p class="hint" style="margin-bottom:10px">Workflow: pick date + subject → mark the class → <b>Save session</b> → <b>New session</b> for the next lesson. Students with no marks/notes are treated as away and are not counted. Saving again for the same open session updates that lesson instead of duplicating it. Use <b>In / Abs</b> to mark known absences. Gear: class list, reports, save work, import/export, new term.</p>
 
   <div class="table-bar">
     <span class="row-count" id="rowCount">20 rows</span>
@@ -416,7 +417,7 @@
   </div>
 
   <footer>
-    <p>Browser keeps a compact archive for review. Use <b>Save work…</b> to put full images in a folder on this computer (plenty of space). <span id="archiveCount"></span></p>
+    <p>Browser keeps a compact archive for review when you hit <b>Save session</b>. Use <b>Save work…</b> to put full images in a folder on this computer. <span id="archiveCount"></span></p>
     <p><a href="https://github.com/planomy/teach">planomy/teach</a></p>
   </footer>
 </div>
@@ -549,9 +550,37 @@ function saveArchive(list){
 
 const MAX_ARCHIVED_SHOTS = 4;
 
+function studentHasFeedback(st){
+  if(!st) return false;
+  return !!(st.effort || st.part || st.task || (st.note || '').trim() || (st.shots && st.shots.length));
+}
+
 function sessionHasData(s){
   if((s.classNote || '').trim()) return true;
-  return s.students.some(st => st.name || st.note || st.shots?.length || st.effort || st.part || st.task);
+  return (s.students || []).some(st => (st.name || '').trim() && (studentHasFeedback(st) || st.absent));
+}
+
+function sessionHasMarking(s){
+  if((s.classNote || '').trim()) return true;
+  return (s.students || []).some(st => (st.name || '').trim() && studentHasFeedback(st));
+}
+
+function archiveFingerprint(s){
+  return JSON.stringify({
+    date: s.date || '',
+    subject: s.subject || '',
+    lesson: s.lesson || '',
+    classNote: (s.classNote || '').trim(),
+    students: (s.students || []).map(st => ({
+      name: (st.name || '').trim(),
+      effort: st.effort || 0,
+      part: st.part || 0,
+      task: st.task || 0,
+      note: (st.note || '').trim(),
+      absent: !!st.absent,
+      shots: (st.shots || []).length
+    }))
+  });
 }
 
 function snapshotSession(s){
@@ -563,32 +592,66 @@ function snapshotSession(s){
     classNote: s.classNote || '',
     archived: new Date().toISOString(),
     students: s.students.map(st => {
+      const name = (st.name || '').trim();
+      const hasFeedback = studentHasFeedback(st);
+      // Named students with no marks/notes/work are treated as away for saved data.
+      const awayAssumed = !!name && !st.absent && !hasFeedback;
       const shots = (st.shots || []).slice(-MAX_ARCHIVED_SHOTS);
       return {
-        name: (st.name || '').trim(),
-        effort: st.effort || 0,
-        part: st.part || 0,
-        task: st.task || 0,
-        note: (st.note || '').trim(),
-        absent: !!st.absent,
-        screenshots: (st.shots || []).length,
-        shots
+        name,
+        effort: awayAssumed ? 0 : (st.effort || 0),
+        part: awayAssumed ? 0 : (st.part || 0),
+        task: awayAssumed ? 0 : (st.task || 0),
+        note: awayAssumed ? '' : (st.note || '').trim(),
+        absent: !!st.absent || awayAssumed,
+        awayAssumed,
+        screenshots: awayAssumed ? 0 : (st.shots || []).length,
+        shots: awayAssumed ? [] : shots
       };
-    })
+    }).filter(st => st.name)
   };
 }
 
-function archiveCurrentSession(){
+function archiveCurrentSession(opts = {}){
+  const quiet = !!opts.quiet;
   flushSave();
-  if(!sessionHasData(session)) return false;
+  if(!sessionHasMarking(session) && !session.students.some(st => st.absent && (st.name || '').trim())){
+    if(!quiet) flashStatus('Nothing to save — add marks or notes first');
+    return false;
+  }
+  if(!(session.subject || '').trim()){
+    if(!quiet) flashStatus('Pick a subject before saving');
+    return false;
+  }
+  const fingerprint = archiveFingerprint(session);
+  if(session.lastArchiveFingerprint === fingerprint && session.lastArchiveId){
+    if(!quiet) flashStatus('Already saved — no changes since last save');
+    return false;
+  }
   const snap = snapshotSession(session);
   const archive = loadArchive();
-  const i = archive.findIndex(a => a.id === snap.id);
-  if(i >= 0) archive[i] = snap;
+  let i = archive.findIndex(a => a.id === snap.id);
+  // Guard: same date + subject while this session is still open → replace that entry
+  if(i < 0 && session.lastArchiveId){
+    i = archive.findIndex(a => a.id === session.lastArchiveId);
+  }
+  if(i < 0){
+    i = archive.findIndex(a =>
+      a.date === snap.date &&
+      (a.subject || '') === (snap.subject || '') &&
+      a.id === snap.id
+    );
+  }
+  const updated = i >= 0;
+  if(updated) archive[i] = snap;
   else archive.unshift(snap);
   while(archive.length > 300) archive.pop();
   saveArchive(archive);
+  session.lastArchiveId = snap.id;
+  session.lastArchiveFingerprint = fingerprint;
+  flushSave();
   updateArchiveCount();
+  if(!quiet) flashStatus(updated ? 'Session updated in archive' : 'Session saved to archive');
   return true;
 }
 
@@ -760,7 +823,7 @@ function renderReportCards(){
   reportData = buildStudentReports(getSessionsForReport(includeCurrent), filters);
   const list = document.getElementById('reportList');
   if(!reportData.length){
-    list.innerHTML = '<div class="modal-empty">No student data for this filter yet.<br>Keep noting lessons — they archive when you start a <b>New session</b>.</div>';
+    list.innerHTML = '<div class="modal-empty">No student data for this filter yet.<br>Mark a lesson and hit <b>Save session</b> — or use <b>New session</b> after saving.</div>';
     return;
   }
   list.innerHTML = reportData.map((r, i) => {
@@ -1043,6 +1106,8 @@ function defaultSession(){
     subject: '',
     lesson: '',
     classNote: '',
+    lastArchiveId: null,
+    lastArchiveFingerprint: null,
     students: Array.from({length: DEFAULT_ROWS}, () => newStudent())
   };
 }
@@ -1060,6 +1125,8 @@ function loadSession(){
         if(typeof st.absent !== 'boolean') st.absent = false;
         if(!Array.isArray(st.shots)) st.shots = [];
       });
+      if(!('lastArchiveId' in s)) s.lastArchiveId = null;
+      if(!('lastArchiveFingerprint' in s)) s.lastArchiveFingerprint = null;
       return s;
     }
   }catch(e){}
@@ -1105,9 +1172,11 @@ function freshSessionKeepingNames(){
   return {
     id: uid(),
     date: new Date().toISOString().slice(0, 10),
-    subject: prev.subject || '',
+    subject: '',
     lesson: '',
     classNote: '',
+    lastArchiveId: null,
+    lastArchiveFingerprint: null,
     students: Array.from({ length: count }, (_, i) => newStudent(names[i] || ''))
   };
 }
@@ -1435,17 +1504,43 @@ document.getElementById('markAllBtn').onclick = () => {
   flashStatus(n ? `Marked ${n} student${n===1?'':'s'}` : 'No present students to mark');
 };
 
+document.getElementById('saveSessionBtn').onclick = () => {
+  archiveCurrentSession();
+};
+
 document.getElementById('newSessionBtn').onclick = async () => {
-  if(sessionHasData(session) && !confirm('Archive this session and start a new one? Student names stay; ratings, notes and work clear from the table (work stays in archive / can be saved to your computer).')) return;
+  flushSave();
+  const hasMarking = sessionHasMarking(session);
+  const alreadySaved = hasMarking && session.lastArchiveFingerprint === archiveFingerprint(session);
+
+  if(hasMarking && !alreadySaved){
+    const saveFirst = confirm('Save this lesson to the archive before starting a new session?\n\nOK — save, then start next class\nCancel — stay on this session');
+    if(!saveFirst) return;
+    if(!archiveCurrentSession({ quiet: true })){
+      // e.g. missing subject
+      return;
+    }
+  } else if(hasMarking && alreadySaved){
+    if(!confirm('Start a new session for the next class?\n\nStudent names stay. Marks, notes and pasted work clear from the table (already in the archive).')) return;
+  } else if(sessionHasData(session)){
+    if(!confirm('Start a new session?\n\nStudent names stay; the table clears for the next class.')) return;
+  }
+
   const hadWork = session.students.some(st => st.shots?.length);
   if(hadWork){
-    const saveFirst = confirm('Save pasted work to a folder on this computer before starting the new session?\n\n(Chrome/Edge: pick a folder. Other browsers: downloads a zip.)');
-    if(saveFirst) await saveCurrentSessionWork();
+    const saveWork = confirm('Also save pasted work images to a folder on this computer?\n\n(Chrome/Edge: pick a folder. Other browsers: downloads a zip.)');
+    if(saveWork) await saveCurrentSessionWork();
   }
-  archiveCurrentSession();
+
+  // If they never hit Save but somehow have only absences, still snapshot once.
+  if(sessionHasData(session) && session.lastArchiveFingerprint !== archiveFingerprint(session)){
+    archiveCurrentSession({ quiet: true });
+  }
+
   syncRosterFromSession();
   session = freshSessionKeepingNames();
   syncHeader(); render(); scheduleSave();
+  flashStatus('New session — pick the next subject');
 };
 
 document.getElementById('newTermBtn').onclick = () => {
